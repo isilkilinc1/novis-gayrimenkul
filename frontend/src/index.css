@@ -1,1 +1,28 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap");
+
 @import "tailwindcss";
+
+@theme {
+  --color-novis-gold: #c9a227;
+  --color-novis-anthracite: #1c1c1c;
+  --color-novis-brown: #5a4032;
+  --color-novis-bronze: #8c6239;
+  --color-novis-cream: #f5f0e8;
+
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Playfair Display", serif;
+}
+
+body {
+  margin: 0;
+  background-color: #f5f0e8;
+  color: #1c1c1c;
+  font-family: "Inter", sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}

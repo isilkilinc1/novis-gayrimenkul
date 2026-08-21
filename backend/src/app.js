@@ -2,6 +2,11 @@ const express = require("express");
 const cors = require("cors");
 const pool = require("./config/database");
 
+// Rotalarımızı import ediyoruz
+const propertyRoutes = require("./routes/propertyRoutes");
+const authRoutes = require("./routes/authRoutes");
+const errorMiddleware = require("./middleware/errorMiddleware");
+
 const app = express();
 
 app.use(cors());
@@ -56,5 +61,14 @@ app.get("/api/test-tables", async (req, res) => {
     });
   }
 });
+
+// 4. İlan Rotaları (Property Routes) - BURASI EKSİKTİ, EKLEDİK!
+app.use("/api/properties", propertyRoutes);
+
+// 5. Auth Rotaları
+app.use("/api/auth", authRoutes);
+
+// 6. Hata Yakalama Middleware'i (En sonda olmalı)
+app.use(errorMiddleware);
 
 module.exports = app;

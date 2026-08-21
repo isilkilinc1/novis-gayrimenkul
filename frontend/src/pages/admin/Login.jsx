@@ -1,8 +1,38 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
+import { loginAdmin } from "../../services/authService";
 
 function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      // Backend API'ye istek atıyoruz
+      const data = await loginAdmin(email, password);
+
+      // Başarılı olursa token'ı tarayıcıya kaydediyoruz
+      localStorage.setItem("token", data.token);
+
+      // Admin paneline yönlendiriyoruz
+      navigate("/admin");
+    } catch (err) {
+      // Hata mesajını yakalayıp ekranda gösteriyoruz
+      if (err.response && err.response.data) {
+        setError(err.response.data.message);
+      } else {
+        setError("Giriş yapılırken bir hata oluştu.");
+      }
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-novis-anthracite px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
@@ -13,12 +43,20 @@ function Login() {
           <p className="mt-2 text-sm text-novis-brown">Yönetim Paneli</p>
         </div>
 
-        <form className="space-y-5">
+        {error && (
+          <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
           <Input
             label="E-posta"
             name="email"
             type="email"
             placeholder="admin@novis.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
 
           <Input
@@ -26,6 +64,8 @@ function Login() {
             name="password"
             type="password"
             placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
 
           <Button type="submit" className="w-full">

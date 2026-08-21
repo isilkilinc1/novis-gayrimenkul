@@ -1,0 +1,15 @@
+import axios from "axios";
+
+const API_URL = "http://localhost:5000/api";
+
+// Tüm ilanları backend'den çeken fonksiyon
+export const getProperties = async () => {
+  const response = await axios.get(`${API_URL}/properties`);
+  return response.data;
+};
+
+// ID'ye göre tek ilanı backend'den çeken fonksiyon
+export const getPropertyById = async (id) => {
+  const response = await axios.get(`${API_URL}/properties/${id}`);
+  return response.data;
+};

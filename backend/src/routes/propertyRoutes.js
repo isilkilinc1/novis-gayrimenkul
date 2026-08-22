@@ -8,13 +8,21 @@ const { requireAdmin } = require("../middleware/roleMiddleware");
 const router = express.Router();
 
 // --- PUBLIC (HERKESİN ERİŞEBİLDİĞİ) ROTALAR ---
-// GET /api/properties -> Tüm ilanları getir
-router.get("/", propertyController.getProperties);
+// GET /api/properties -> Sadece ACTIVE (aktif) olan ilanları getir
+router.get("/", propertyController.getActiveProperties);
 
 // GET /api/properties/:id -> Tek bir ilanı getir
 router.get("/:id", propertyController.getPropertyById);
 
 // --- PROTECTED (SADECE ADMİNİN ERİŞEBİLDİĞİ) ROTALAR ---
+// GET /api/properties/admin/all -> Tüm ilanları (aktif, satılmış vb.) getir
+router.get(
+  "/admin/all",
+  authenticate,
+  requireAdmin,
+  propertyController.getAdminProperties,
+);
+
 // POST /api/properties -> Yeni ilan oluştur
 router.post("/", authenticate, requireAdmin, propertyController.createProperty);
 
@@ -26,7 +34,7 @@ router.put(
   propertyController.updateProperty,
 );
 
-// YENİ: PATCH /api/properties/:id/status -> Sadece ilan durumunu güncelle
+// PATCH /api/properties/:id/status -> Sadece ilan durumunu güncelle
 router.patch(
   "/:id/status",
   authenticate,

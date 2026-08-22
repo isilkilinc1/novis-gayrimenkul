@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  getProperties,
+  getAdminProperties,
   deleteProperty,
   updatePropertyStatus,
 } from "../../services/propertyService";
@@ -36,11 +36,11 @@ function Properties() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Sayfa ilk açıldığında verileri çekiyoruz
+  // Sayfa ilk açıldığında tüm ilanları admin yetkisiyle çekiyoruz
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        const data = await getProperties();
+        const data = await getAdminProperties();
         setProperties(data);
         setError(null);
       } catch (err) {

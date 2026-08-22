@@ -1,7 +1,17 @@
 const propertyService = require("../services/propertyService");
 
-// Tüm ilanları getir
-const getProperties = async (req, res, next) => {
+// 1. A) PUBLIC: Sadece aktif ilanları getir (Ziyaretçiler için)
+const getActiveProperties = async (req, res, next) => {
+  try {
+    const properties = await propertyService.getAllActiveProperties();
+    res.status(200).json(properties);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 1. B) ADMIN: Tüm ilanları getir (Tüm status'ler dahil)
+const getAdminProperties = async (req, res, next) => {
   try {
     const properties = await propertyService.getAllProperties();
     res.status(200).json(properties);
@@ -56,13 +66,12 @@ const updateProperty = async (req, res, next) => {
   }
 };
 
-// YENİ: Sadece ilan durumunu (status) güncelleyen fonksiyon
+// Sadece ilan durumunu (status) güncelleyen fonksiyon
 const updatePropertyStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    // Geçerli durumları tanımlıyoruz
     const allowedStatuses = ["ACTIVE", "INACTIVE", "SOLD", "RENTED"];
 
     if (!allowedStatuses.includes(status)) {
@@ -110,10 +119,11 @@ const deleteProperty = async (req, res, next) => {
 };
 
 module.exports = {
-  getProperties,
+  getActiveProperties,
+  getAdminProperties,
   getPropertyById,
   createProperty,
   updateProperty,
-  updatePropertyStatus, // Dışarı aktardık
+  updatePropertyStatus,
   deleteProperty,
 };

@@ -2,9 +2,20 @@ import axios from "axios";
 
 const API_URL = "http://localhost:5000/api";
 
-// Tüm ilanları backend'den çeken fonksiyon
+// Ziyaretçiler için: Sadece ACTIVE ilanları çeken fonksiyon
 export const getProperties = async () => {
   const response = await axios.get(`${API_URL}/properties`);
+  return response.data;
+};
+
+// Adminler için: Tüm ilanları (ACTIVE, SOLD, INACTIVE vb.) çeken fonksiyon
+export const getAdminProperties = async () => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get(`${API_URL}/properties/admin/all`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
   return response.data;
 };
 

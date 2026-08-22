@@ -1,6 +1,17 @@
 const pool = require("../config/database");
 
-// 1. Tüm ilanları getir
+// 1. A) YENİ: Sadece aktif (ACTIVE) ilanları getir (Ziyaretçiler / Public site için)
+const getAllActiveProperties = async () => {
+  const result = await pool.query(`
+    SELECT *
+    FROM properties
+    WHERE status = 'ACTIVE'
+    ORDER BY created_at DESC
+  `);
+  return result.rows;
+};
+
+// 1. B) Tüm ilanları getir (Admin paneli için - Bütün status'ler dahil)
 const getAllProperties = async () => {
   const result = await pool.query(`
     SELECT *
@@ -175,6 +186,7 @@ const deleteProperty = async (id) => {
 };
 
 module.exports = {
+  getAllActiveProperties,
   getAllProperties,
   getPropertyById,
   createProperty,

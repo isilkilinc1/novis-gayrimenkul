@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import PublicLayout from "../layouts/PublicLayout";
 import AdminLayout from "../layouts/AdminLayout";
+import ProtectedRoute from "./ProtectedRoute"; // <-- Bekçimizi import ettik
 
 import Home from "../pages/public/Home";
 import Properties from "../pages/public/Properties";
@@ -28,15 +29,17 @@ function AppRouter() {
           <Route path="/iletisim" element={<Contact />} />
         </Route>
 
-        {/* ADMIN LOGIN */}
+        {/* ADMIN LOGIN (Public kalmalı ki giriş yapabilelim) */}
         <Route path="/admin/login" element={<Login />} />
 
-        {/* ADMIN Panel Sayfaları ve Layout'u */}
-        <Route element={<AdminLayout />}>
-          <Route path="/admin" element={<Dashboard />} />
-          <Route path="/admin/ilanlar" element={<AdminProperties />} />
-          <Route path="/admin/musteriler" element={<Customers />} />
-          <Route path="/admin/talepler" element={<ContactRequests />} />
+        {/* PROTECTED ADMIN PANEL (Önce ProtectedRoute bekçisinden geçer, sonra AdminLayout'a girer) */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/admin" element={<Dashboard />} />
+            <Route path="/admin/ilanlar" element={<AdminProperties />} />
+            <Route path="/admin/musteriler" element={<Customers />} />
+            <Route path="/admin/talepler" element={<ContactRequests />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

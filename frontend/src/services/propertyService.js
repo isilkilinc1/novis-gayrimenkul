@@ -25,7 +25,7 @@ export const deleteProperty = async (id) => {
   return response.data;
 };
 
-// Yeni ilan oluşturan fonksiyon (YENİ EKLEDİK)
+// Yeni ilan oluşturan fonksiyon
 export const createProperty = async (propertyData) => {
   const token = localStorage.getItem("token");
   const response = await axios.post(`${API_URL}/properties`, propertyData, {
@@ -33,5 +33,20 @@ export const createProperty = async (propertyData) => {
       Authorization: `Bearer ${token}`,
     },
   });
+  return response.data;
+};
+
+// İlanı güncelleyen fonksiyon (YENİ EKLEDİK)
+export const updateProperty = async (id, propertyData) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.put(
+    `${API_URL}/properties/${id}`,
+    propertyData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
   return response.data;
 };

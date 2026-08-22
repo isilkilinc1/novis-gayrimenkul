@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // <-- YENİ İTHALAT
+import { useNavigate } from "react-router-dom";
 import { getProperties, deleteProperty } from "../../services/propertyService";
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
 
 function Properties() {
-  const navigate = useNavigate(); // <-- YENİ HOOK
+  const navigate = useNavigate();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -59,7 +59,6 @@ function Properties() {
           </p>
         </div>
         <div>
-          {/* YENİ: Butona tıklayınca form sayfasına yönlendiriyoruz */}
           <Button
             variant="primary"
             onClick={() => navigate("/admin/ilanlar/yeni")}
@@ -168,6 +167,16 @@ function Properties() {
 
                       {/* İşlemler */}
                       <td className="py-4 px-6 text-right space-x-2">
+                        {/* YENİ: Düzenle Butonu */}
+                        <button
+                          onClick={() =>
+                            navigate(`/admin/ilanlar/${property.id}/duzenle`)
+                          }
+                          className="text-novis-anthracite hover:text-black font-medium text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition"
+                        >
+                          Düzenle
+                        </button>
+
                         <button
                           onClick={() =>
                             handleDelete(property.id, property.title)

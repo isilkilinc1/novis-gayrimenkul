@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // <-- YENİ İTHALAT
 import { getProperties, deleteProperty } from "../../services/propertyService";
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
 
 function Properties() {
+  const navigate = useNavigate(); // <-- YENİ HOOK
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Sayfa ilk açıldığında verileri çekiyoruz (Fonksiyon useEffect içine alındı)
+  // Sayfa ilk açıldığında verileri çekiyoruz
   useEffect(() => {
     const fetchProperties = async () => {
       try {
@@ -27,7 +29,7 @@ function Properties() {
     fetchProperties();
   }, []);
 
-  // Silme fonksiyonu (Şimdilik güvenlik onayı ile)
+  // Silme fonksiyonu
   const handleDelete = async (id, title) => {
     if (
       window.confirm(
@@ -36,7 +38,6 @@ function Properties() {
     ) {
       try {
         await deleteProperty(id);
-        // Listeden silinen ilanı çıkarıp ekranı güncelliyoruz
         setProperties(properties.filter((prop) => prop.id !== id));
       } catch (err) {
         console.error("Silme hatası:", err);
@@ -58,7 +59,13 @@ function Properties() {
           </p>
         </div>
         <div>
-          <Button variant="primary">+ Yeni İlan</Button>
+          {/* YENİ: Butona tıklayınca form sayfasına yönlendiriyoruz */}
+          <Button
+            variant="primary"
+            onClick={() => navigate("/admin/ilanlar/yeni")}
+          >
+            + Yeni İlan
+          </Button>
         </div>
       </div>
 

@@ -24,3 +24,14 @@ export const deleteProperty = async (id) => {
   });
   return response.data;
 };
+
+// Yeni ilan oluşturan fonksiyon (YENİ EKLEDİK)
+export const createProperty = async (propertyData) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.post(`${API_URL}/properties`, propertyData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};

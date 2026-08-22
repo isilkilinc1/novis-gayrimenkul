@@ -14,17 +14,6 @@ export const getPropertyById = async (id) => {
   return response.data;
 };
 
-// İlanı silen fonksiyon
-export const deleteProperty = async (id) => {
-  const token = localStorage.getItem("token"); // Admin token'ı
-  const response = await axios.delete(`${API_URL}/properties/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return response.data;
-};
-
 // Yeni ilan oluşturan fonksiyon
 export const createProperty = async (propertyData) => {
   const token = localStorage.getItem("token");
@@ -36,7 +25,7 @@ export const createProperty = async (propertyData) => {
   return response.data;
 };
 
-// İlanı güncelleyen fonksiyon (YENİ EKLEDİK)
+// İlanı güncelleyen fonksiyon
 export const updateProperty = async (id, propertyData) => {
   const token = localStorage.getItem("token");
   const response = await axios.put(
@@ -48,5 +37,31 @@ export const updateProperty = async (id, propertyData) => {
       },
     },
   );
+  return response.data;
+};
+
+// Sadece ilan durumunu (status) güncelleyen fonksiyon
+export const updatePropertyStatus = async (id, status) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.patch(
+    `${API_URL}/properties/${id}/status`,
+    { status },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  return response.data;
+};
+
+// İlanı silen fonksiyon
+export const deleteProperty = async (id) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.delete(`${API_URL}/properties/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
   return response.data;
 };

@@ -65,7 +65,7 @@ const createProperty = async (propertyData) => {
       title,
       description,
       listing_type,
-      status,
+      status || "ACTIVE",
       price,
       city,
       district,
@@ -144,7 +144,23 @@ const updateProperty = async (id, propertyData) => {
   return result.rows[0];
 };
 
-// 5. İlanı sil (DELETE)
+// 5. Sadece ilanın durumunu (status) güncelleyen fonksiyon
+const updatePropertyStatus = async (id, status) => {
+  const result = await pool.query(
+    `
+    UPDATE properties
+    SET status = $1,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = $2
+    RETURNING *
+    `,
+    [status, id],
+  );
+
+  return result.rows[0];
+};
+
+// 6. İlanı sil (DELETE)
 const deleteProperty = async (id) => {
   const result = await pool.query(
     `
@@ -163,5 +179,6 @@ module.exports = {
   getPropertyById,
   createProperty,
   updateProperty,
+  updatePropertyStatus,
   deleteProperty,
 };

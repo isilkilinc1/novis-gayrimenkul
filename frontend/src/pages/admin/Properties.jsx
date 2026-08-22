@@ -1,9 +1,34 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getProperties, deleteProperty } from "../../services/propertyService";
+import {
+  getProperties,
+  deleteProperty,
+  updatePropertyStatus,
+} from "../../services/propertyService";
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
+
+// Status etiketleri ve renkleri (Badge variant) için yardımcı fonksiyonlar
+const getPropertyStatusLabel = (status) => {
+  const labels = {
+    ACTIVE: "Aktif",
+    INACTIVE: "Yayından Kaldırıldı",
+    SOLD: "Satıldı",
+    RENTED: "Kiralandı",
+  };
+  return labels[status] || status;
+};
+
+const getPropertyStatusVariant = (status) => {
+  const variants = {
+    ACTIVE: "success",
+    INACTIVE: "dark",
+    SOLD: "danger",
+    RENTED: "bronze",
+  };
+  return variants[status] || "default";
+};
 
 function Properties() {
   const navigate = useNavigate();
@@ -28,6 +53,22 @@ function Properties() {
 
     fetchProperties();
   }, []);
+
+  // Durum değiştirme fonksiyonu
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const response = await updatePropertyStatus(id, newStatus);
+      // Listeyi güncelliyoruz ki sayfa yenilenmeden ekranda yansısın
+      setProperties(
+        properties.map((prop) =>
+          prop.id === id ? { ...prop, status: response.property.status } : prop,
+        ),
+      );
+    } catch (err) {
+      console.error("Durum güncelleme hatası:", err);
+      alert("İlan durumu güncellenirken bir hata oluştu.");
+    }
+  };
 
   // Silme fonksiyonu
   const handleDelete = async (id, title) => {
@@ -152,22 +193,31 @@ function Properties() {
                         )}
                       </td>
 
-                      {/* Durum */}
+                      {/* Durum (Badge ve Hızlı Durum Değiştirme Seçimi) */}
                       <td className="py-4 px-6">
-                        <Badge
-                          variant={
-                            property.status === "ACTIVE" ? "success" : "default"
-                          }
-                        >
-                          {property.status === "ACTIVE"
-                            ? "Aktif"
-                            : property.status}
-                        </Badge>
+                        <div className="flex flex-col gap-1.5 items-start">
+                          <Badge
+                            variant={getPropertyStatusVariant(property.status)}
+                          >
+                            {getPropertyStatusLabel(property.status)}
+                          </Badge>
+                          <select
+                            value={property.status}
+                            onChange={(e) =>
+                              handleStatusChange(property.id, e.target.value)
+                            }
+                            className="text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white text-novis-anthracite focus:outline-none focus:ring-1 focus:ring-novis-bronze"
+                          >
+                            <option value="ACTIVE">Aktif</option>
+                            <option value="INACTIVE">Yayından Kaldır</option>
+                            <option value="SOLD">Satıldı</option>
+                            <option value="RENTED">Kiralandı</option>
+                          </select>
+                        </div>
                       </td>
 
                       {/* İşlemler */}
                       <td className="py-4 px-6 text-right space-x-2">
-                        {/* YENİ: Düzenle Butonu */}
                         <button
                           onClick={() =>
                             navigate(`/admin/ilanlar/${property.id}/duzenle`)

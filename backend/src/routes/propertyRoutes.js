@@ -26,6 +26,14 @@ router.put(
   propertyController.updateProperty,
 );
 
+// YENİ: PATCH /api/properties/:id/status -> Sadece ilan durumunu güncelle
+router.patch(
+  "/:id/status",
+  authenticate,
+  requireAdmin,
+  propertyController.updatePropertyStatus,
+);
+
 // DELETE /api/properties/:id -> İlanı sil
 router.delete(
   "/:id",

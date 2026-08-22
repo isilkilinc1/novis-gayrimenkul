@@ -56,6 +56,38 @@ const updateProperty = async (req, res, next) => {
   }
 };
 
+// YENİ: Sadece ilan durumunu (status) güncelleyen fonksiyon
+const updatePropertyStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Geçerli durumları tanımlıyoruz
+    const allowedStatuses = ["ACTIVE", "INACTIVE", "SOLD", "RENTED"];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        message: "Geçersiz ilan durumu.",
+      });
+    }
+
+    const property = await propertyService.updatePropertyStatus(id, status);
+
+    if (!property) {
+      return res.status(404).json({
+        message: "İlan bulunamadı.",
+      });
+    }
+
+    res.status(200).json({
+      message: "İlan durumu başarıyla güncellendi.",
+      property,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // İlanı sil (DELETE)
 const deleteProperty = async (req, res, next) => {
   try {
@@ -82,5 +114,6 @@ module.exports = {
   getPropertyById,
   createProperty,
   updateProperty,
+  updatePropertyStatus, // Dışarı aktardık
   deleteProperty,
 };

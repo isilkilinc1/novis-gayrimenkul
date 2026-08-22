@@ -7,11 +7,11 @@ import Input from "../../components/ui/Input";
 
 function CreateProperty() {
   const navigate = useNavigate();
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
+    property_type: "HOUSE",
     title: "",
     description: "",
     listing_type: "SALE",
@@ -31,6 +31,18 @@ function CreateProperty() {
     longitude: "",
   });
 
+  // Türüne göre dinamik başlık placeholder'ı
+  const getTitlePlaceholder = () => {
+    switch (formData.property_type) {
+      case "LAND":
+        return "Örn. Meram'da Yatırımlık 1200m² Arsa";
+      case "COMMERCIAL":
+        return "Örn. Şehir Merkezinde Kiralık Dükkan";
+      default:
+        return "Örn. Selçuklu'da Lüks 3+1 Daire";
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -45,7 +57,6 @@ function CreateProperty() {
     setLoading(true);
 
     try {
-      // API'ye sayısal alanları doğru tipte göndermek için dönüştürüyoruz
       const payload = {
         ...formData,
         price: Number(formData.price),
@@ -61,7 +72,6 @@ function CreateProperty() {
       };
 
       await createProperty(payload);
-      // Başarılı olduğunda ilanlar sayfasına yönlendiriyoruz
       navigate("/admin/ilanlar");
     } catch (err) {
       console.error("İlan oluşturma hatası:", err);
@@ -76,7 +86,6 @@ function CreateProperty() {
   return (
     <Container>
       <div className="max-w-3xl mx-auto">
-        {/* Üst Başlık */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="font-display text-3xl font-bold text-novis-anthracite">
@@ -95,31 +104,55 @@ function CreateProperty() {
           </Button>
         </div>
 
-        {/* Hata Mesajı */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
             {error}
           </div>
         )}
 
-        {/* Form Kartı */}
         <form
           onSubmit={handleSubmit}
           className="bg-white p-6 sm:p-8 rounded-2xl border border-novis-bronze/20 shadow-sm space-y-6"
         >
-          {/* İlan Başlığı */}
+          <div className="p-4 bg-novis-cream/30 rounded-xl border border-novis-bronze/20">
+            <label className="block text-sm font-bold text-novis-anthracite mb-2">
+              Gayrimenkul Türü *
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {["HOUSE", "LAND", "COMMERCIAL"].map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() =>
+                    setFormData((prev) => ({ ...prev, property_type: type }))
+                  }
+                  className={`py-2.5 px-4 rounded-lg text-sm font-medium transition border ${
+                    formData.property_type === type
+                      ? "bg-novis-anthracite text-white border-novis-anthracite"
+                      : "bg-white text-novis-anthracite border-novis-bronze/30 hover:bg-gray-50"
+                  }`}
+                >
+                  {type === "HOUSE"
+                    ? "🏠 Konut"
+                    : type === "LAND"
+                      ? "🌳 Arsa"
+                      : "🏪 İşyeri"}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div>
             <Input
               label="İlan Başlığı *"
               name="title"
-              placeholder="Örn. Selçuklu'da Lüks 3+1 Daire"
+              placeholder={getTitlePlaceholder()} // Dinamik placeholder
               value={formData.title}
               onChange={handleChange}
               required
             />
           </div>
 
-          {/* Açıklama */}
           <div>
             <label className="block text-sm font-medium text-novis-anthracite mb-2">
               Açıklama *
@@ -135,7 +168,6 @@ function CreateProperty() {
             />
           </div>
 
-          {/* Tür ve Fiyat */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-novis-anthracite mb-2">
@@ -151,7 +183,6 @@ function CreateProperty() {
                 <option value="RENT">Kiralık</option>
               </select>
             </div>
-
             <div>
               <Input
                 label="Fiyat (TL) *"
@@ -165,7 +196,6 @@ function CreateProperty() {
             </div>
           </div>
 
-          {/* Konum Bilgileri: Şehir, İlçe, Mahalle */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input
               label="Şehir *"
@@ -190,7 +220,6 @@ function CreateProperty() {
             />
           </div>
 
-          {/* Adres */}
           <Input
             label="Açık Adres"
             name="address"
@@ -199,92 +228,105 @@ function CreateProperty() {
             onChange={handleChange}
           />
 
-          {/* Gayrimenkul Özellikleri: m2, Oda, Kat, Bina Yaşı */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Input
-              label="Metrekare (m²)"
-              name="square_meters"
-              type="number"
-              placeholder="180"
-              value={formData.square_meters}
-              onChange={handleChange}
-            />
-
-            <div>
-              <label className="block text-sm font-medium text-novis-anthracite mb-2">
-                Oda Sayısı
-              </label>
-              <select
-                name="rooms"
-                value={formData.rooms}
+          {formData.property_type === "LAND" ? (
+            <div className="grid grid-cols-1 gap-4">
+              <Input
+                label="Metrekare (m²) *"
+                name="square_meters"
+                type="number"
+                placeholder="1200"
+                value={formData.square_meters}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-novis-bronze/30 bg-white px-4 py-3 text-novis-anthracite focus:border-novis-bronze focus:outline-none focus:ring-1 focus:ring-novis-bronze transition text-sm"
-              >
-                <option value="1+0">1+0</option>
-                <option value="1+1">1+1</option>
-                <option value="2+1">2+1</option>
-                <option value="3+1">3+1</option>
-                <option value="4+1">4+1</option>
-                <option value="5+1">5+1</option>
-              </select>
+                required
+              />
             </div>
-
-            <Input
-              label="Bulunduğu Kat"
-              name="floor"
-              type="number"
-              placeholder="5"
-              value={formData.floor}
-              onChange={handleChange}
-            />
-
-            <Input
-              label="Bina Yaşı"
-              name="building_age"
-              type="number"
-              placeholder="3"
-              value={formData.building_age}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Isıtma Tipi ve Balkon */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-            <div>
-              <label className="block text-sm font-medium text-novis-anthracite mb-2">
-                Isıtma Tipi
-              </label>
-              <select
-                name="heating_type"
-                value={formData.heating_type}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-novis-bronze/30 bg-white px-4 py-3 text-novis-anthracite focus:border-novis-bronze focus:outline-none focus:ring-1 focus:ring-novis-bronze transition text-sm"
-              >
-                <option value="Kombi">Kombi (Doğalgaz)</option>
-                <option value="Merkezi">Merkezi</option>
-                <option value="Yerden Isıtma">Yerden Isıtma</option>
-                <option value="Klima">Klima</option>
-                <option value="Diğer">Diğer</option>
-              </select>
-            </div>
-
-            <div className="pt-6 sm:pt-4">
-              <label className="flex items-center gap-3 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  name="balcony"
-                  checked={formData.balcony}
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Input
+                  label="Metrekare (m²)"
+                  name="square_meters"
+                  type="number"
+                  placeholder="180"
+                  value={formData.square_meters}
                   onChange={handleChange}
-                  className="h-5 w-5 rounded border-gray-300 text-novis-bronze focus:ring-novis-bronze"
                 />
-                <span className="text-sm font-medium text-novis-anthracite">
-                  Balkon Var
-                </span>
-              </label>
-            </div>
-          </div>
+                {formData.property_type === "HOUSE" && (
+                  <div>
+                    <label className="block text-sm font-medium text-novis-anthracite mb-2">
+                      Oda Sayısı
+                    </label>
+                    <select
+                      name="rooms"
+                      value={formData.rooms}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-novis-bronze/30 bg-white px-4 py-3 text-novis-anthracite focus:border-novis-bronze focus:outline-none focus:ring-1 focus:ring-novis-bronze transition text-sm"
+                    >
+                      <option value="1+0">1+0</option>
+                      <option value="1+1">1+1</option>
+                      <option value="2+1">2+1</option>
+                      <option value="3+1">3+1</option>
+                      <option value="4+1">4+1</option>
+                      <option value="5+1">5+1</option>
+                    </select>
+                  </div>
+                )}
+                <Input
+                  label="Bulunduğu Kat"
+                  name="floor"
+                  type="number"
+                  placeholder="5"
+                  value={formData.floor}
+                  onChange={handleChange}
+                />
+                <Input
+                  label="Bina Yaşı"
+                  name="building_age"
+                  type="number"
+                  placeholder="3"
+                  value={formData.building_age}
+                  onChange={handleChange}
+                />
+              </div>
 
-          {/* Submit Butonu */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                <div>
+                  <label className="block text-sm font-medium text-novis-anthracite mb-2">
+                    Isıtma Tipi
+                  </label>
+                  <select
+                    name="heating_type"
+                    value={formData.heating_type}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-novis-bronze/30 bg-white px-4 py-3 text-novis-anthracite focus:border-novis-bronze focus:outline-none focus:ring-1 focus:ring-novis-bronze transition text-sm"
+                  >
+                    <option value="Kombi">Kombi (Doğalgaz)</option>
+                    <option value="Merkezi">Merkezi</option>
+                    <option value="Yerden Isıtma">Yerden Isıtma</option>
+                    <option value="Klima">Klima</option>
+                    <option value="Diğer">Diğer</option>
+                  </select>
+                </div>
+                {formData.property_type === "HOUSE" && (
+                  <div className="pt-6 sm:pt-4">
+                    <label className="flex items-center gap-3 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        name="balcony"
+                        checked={formData.balcony}
+                        onChange={handleChange}
+                        className="h-5 w-5 rounded border-gray-300 text-novis-bronze focus:ring-novis-bronze"
+                      />
+                      <span className="text-sm font-medium text-novis-anthracite">
+                        Balkon Var
+                      </span>
+                    </label>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
           <div className="pt-4 border-t border-gray-100 flex justify-end">
             <Button
               type="submit"

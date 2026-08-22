@@ -143,6 +143,7 @@ function Properties() {
                     <th className="py-4 px-6">Fotoğraf</th>
                     <th className="py-4 px-6">Başlık</th>
                     <th className="py-4 px-6">Tür</th>
+                    <th className="py-4 px-6">Kategori</th>
                     <th className="py-4 px-6">Fiyat</th>
                     <th className="py-4 px-6">Konum</th>
                     <th className="py-4 px-6">Durum</th>
@@ -155,10 +156,14 @@ function Properties() {
                       key={property.id}
                       className="hover:bg-gray-50/50 transition"
                     >
-                      {/* Fotoğraf Placeholder */}
+                      {/* Dinamik Emojili Fotoğraf Alanı */}
                       <td className="py-4 px-6">
                         <div className="h-12 w-16 rounded-lg bg-novis-cream flex items-center justify-center text-lg border border-novis-bronze/20">
-                          🏠
+                          {property.property_type === "LAND"
+                            ? "🌳"
+                            : property.property_type === "COMMERCIAL"
+                              ? "🏪"
+                              : "🏠"}
                         </div>
                       </td>
 
@@ -176,6 +181,15 @@ function Properties() {
                         </span>
                       </td>
 
+                      {/* Kategori (Konut / Arsa / İşyeri) */}
+                      <td className="py-4 px-6">
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                          {property.property_type === "HOUSE" && "Konut"}
+                          {property.property_type === "LAND" && "Arsa"}
+                          {property.property_type === "COMMERCIAL" && "İşyeri"}
+                        </span>
+                      </td>
+
                       {/* Fiyat */}
                       <td className="py-4 px-6 font-semibold text-novis-anthracite">
                         {Number(property.price).toLocaleString("tr-TR")} TL
@@ -186,14 +200,9 @@ function Properties() {
                         <div className="text-novis-anthracite font-medium">
                           {property.city} / {property.district}
                         </div>
-                        {property.neighborhood && (
-                          <div className="text-xs text-gray-400">
-                            {property.neighborhood}
-                          </div>
-                        )}
                       </td>
 
-                      {/* Durum (Badge ve Hızlı Durum Değiştirme Seçimi) */}
+                      {/* Durum */}
                       <td className="py-4 px-6">
                         <div className="flex flex-col gap-1.5 items-start">
                           <Badge

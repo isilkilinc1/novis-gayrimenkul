@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
+import PropertyCard from "../../components/PropertyCard";
 import { getProperties } from "../../services/propertyService";
 
 function Home() {
@@ -103,31 +104,7 @@ function Home() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {properties.map((property) => (
-                <div
-                  key={property.id}
-                  className="bg-white p-6 rounded-2xl border border-novis-bronze/20 shadow-sm hover:shadow-md transition"
-                >
-                  <span className="inline-block px-3 py-1 mb-3 text-xs font-semibold uppercase tracking-wider bg-novis-bronze/10 text-novis-bronze rounded-full">
-                    {property.listing_type === "SALE" ? "Satılık" : "Kiralık"}
-                  </span>
-
-                  <h3 className="font-display text-xl font-bold text-novis-anthracite mb-2">
-                    {property.title}
-                  </h3>
-
-                  <p className="text-novis-brown text-sm mb-4 line-clamp-2">
-                    {property.description}
-                  </p>
-
-                  <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                    <span className="text-lg font-bold text-novis-anthracite">
-                      {Number(property.price).toLocaleString("tr-TR")} TL
-                    </span>
-                    <span className="text-sm text-novis-brown">
-                      {property.city} / {property.district}
-                    </span>
-                  </div>
-                </div>
+                <PropertyCard key={property.id} property={property} />
               ))}
             </div>
           )}

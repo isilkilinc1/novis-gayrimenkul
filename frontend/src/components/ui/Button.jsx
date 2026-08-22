@@ -4,6 +4,7 @@ function Button({
   size = "md",
   type = "button",
   onClick,
+  disabled = false, // <-- disabled özelliğini ekledik
   className = "",
 }) {
   const variants = {
@@ -25,10 +26,12 @@ function Button({
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled} // <-- HTML button'a bağladık
       className={`
         inline-flex items-center justify-center
         rounded-lg font-semibold
         transition-colors duration-200 cursor-pointer
+        ${disabled ? "opacity-50 cursor-not-allowed" : ""} 
         ${variants[variant]}
         ${sizes[size]}
         ${className}

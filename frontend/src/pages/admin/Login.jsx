@@ -8,11 +8,13 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // <-- 1. Loading state'ini ekledik
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true); // <-- 2. İstek başladığında loading'i true yapıyoruz
 
     try {
       // Backend API'ye istek atıyoruz
@@ -30,6 +32,8 @@ function Login() {
       } else {
         setError("Giriş yapılırken bir hata oluştu.");
       }
+    } finally {
+      setLoading(false); // <-- 3. İşlem bittiğinde (başarılı veya hatalı) loading'i false yapıyoruz
     }
   };
 
@@ -57,6 +61,7 @@ function Login() {
             placeholder="admin@novis.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
 
           <Input
@@ -66,10 +71,12 @@ function Login() {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
 
-          <Button type="submit" className="w-full">
-            Giriş Yap
+          {/* 4. Butona disabled ve dinamik yazı özelliğini bağladık */}
+          <Button type="submit" disabled={loading} className="w-full">
+            {loading ? "Giriş Yapılıyor..." : "Giriş Yap"}
           </Button>
         </form>
 

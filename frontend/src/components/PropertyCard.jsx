@@ -19,7 +19,7 @@ function PropertyCard({ property }) {
             {property.listing_type === "SALE" ? "Satılık" : "Kiralık"}
           </Badge>
 
-          {/* Tür Etiketi (Opsiyonel ama şık durur) */}
+          {/* Tür Etiketi */}
           <Badge variant="dark">
             {property.property_type === "HOUSE" && "Konut"}
             {property.property_type === "LAND" && "Arsa"}
@@ -59,7 +59,7 @@ function PropertyCard({ property }) {
                   <span>{property.rooms}</span>
                 </>
               )}
-              {property.floor && (
+              {property.floor !== null && property.floor !== undefined && (
                 <>
                   <span>•</span>
                   <span>{property.floor}. Kat</span>

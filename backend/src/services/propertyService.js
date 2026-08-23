@@ -1,13 +1,80 @@
 const pool = require("../config/database");
 
-// 1. A) YENİ: Sadece aktif (ACTIVE) ilanları getir (Ziyaretçiler / Public site için)
-const getAllActiveProperties = async () => {
-  const result = await pool.query(`
-    SELECT *
-    FROM properties
-    WHERE status = 'ACTIVE'
-    ORDER BY created_at DESC
-  `);
+// 1. A) YENİ: Sadece aktif (ACTIVE) ilanları filtrelerle birlikte getir (Ziyaretçiler / Public site için)
+const getAllActiveProperties = async (queryParams = {}) => {
+  const {
+    propertyType,
+    listingType,
+    minPrice,
+    maxPrice,
+    minSquareMeters,
+    maxSquareMeters,
+    rooms,
+    city,
+    district,
+  } = queryParams;
+
+  let query = "SELECT * FROM properties WHERE status = 'ACTIVE'";
+  const values = [];
+
+  // 1. Gayrimenkul Türü (HOUSE, LAND, COMMERCIAL)
+  if (propertyType) {
+    values.push(propertyType);
+    query += ` AND property_type = $${values.length}`;
+  }
+
+  // 2. İlan Türü (SALE, RENT)
+  if (listingType) {
+    values.push(listingType);
+    query += ` AND listing_type = $${values.length}`;
+  }
+
+  // 3. Minimum Fiyat
+  if (minPrice) {
+    values.push(minPrice);
+    query += ` AND price >= $${values.length}`;
+  }
+
+  // 4. Maksimum Fiyat
+  if (maxPrice) {
+    values.push(maxPrice);
+    query += ` AND price <= $${values.length}`;
+  }
+
+  // 5. Minimum m²
+  if (minSquareMeters) {
+    values.push(minSquareMeters);
+    query += ` AND square_meters >= $${values.length}`;
+  }
+
+  // 6. Maksimum m²
+  if (maxSquareMeters) {
+    values.push(maxSquareMeters);
+    query += ` AND square_meters <= $${values.length}`;
+  }
+
+  // 7. Oda Sayısı (Sadece Konutlar için)
+  if (rooms) {
+    values.push(rooms);
+    query += ` AND rooms = $${values.length}`;
+  }
+
+  // 8. Şehir
+  if (city) {
+    values.push(city);
+    query += ` AND city = $${values.length}`;
+  }
+
+  // 9. İlçe
+  if (district) {
+    values.push(district);
+    query += ` AND district = $${values.length}`;
+  }
+
+  // Sıralama: En yeni ilan en üstte
+  query += " ORDER BY created_at DESC";
+
+  const result = await pool.query(query, values);
   return result.rows;
 };
 

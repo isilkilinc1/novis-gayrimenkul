@@ -1,9 +1,10 @@
 const propertyService = require("../services/propertyService");
 
-// 1. A) PUBLIC: Sadece aktif ilanları getir (Ziyaretçiler için)
+// 1. A) PUBLIC: Sadece aktif ilanları getir (Ziyaretçiler için - Filtreler ile birlikte)
 const getActiveProperties = async (req, res, next) => {
   try {
-    const properties = await propertyService.getAllActiveProperties();
+    // req.query içinde frontend'den gelen filtreler (örn: ?propertyType=HOUSE&minPrice=1000) var
+    const properties = await propertyService.getAllActiveProperties(req.query);
     res.status(200).json(properties);
   } catch (error) {
     next(error);

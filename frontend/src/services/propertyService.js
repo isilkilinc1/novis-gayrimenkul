@@ -2,9 +2,11 @@ import axios from "axios";
 
 const API_URL = "http://localhost:5000/api";
 
-// Ziyaretçiler için: Sadece ACTIVE ilanları çeken fonksiyon
-export const getProperties = async () => {
-  const response = await axios.get(`${API_URL}/properties`);
+// Ziyaretçiler için: Sadece ACTIVE ilanları ve filtreleri (opsiyonel) çeken fonksiyon
+export const getProperties = async (filters = {}) => {
+  const response = await axios.get(`${API_URL}/properties`, {
+    params: filters,
+  });
   return response.data;
 };
 

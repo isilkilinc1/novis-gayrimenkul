@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const pool = require("./config/database");
-
+const dashboardRoutes = require("./routes/dashboardRoutes");
 // =====================================================
 // ROUTES
 // =====================================================
@@ -134,6 +134,8 @@ app.use("/api/contact-requests", contactRequestRoutes);
 // =====================================================
 
 app.use(errorMiddleware);
+
+app.use("/api/dashboard", dashboardRoutes);
 
 // =====================================================
 // EXPORT

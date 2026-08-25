@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import * as XLSX from "xlsx";
 import {
   getCustomers,
   createCustomer,
@@ -181,6 +182,37 @@ export default function Customers() {
   };
 
   // =========================================================
+  // EXCEL'E AKTAR (EXPORT)
+  // =========================================================
+  const exportToExcel = () => {
+    const statusLabels = {
+      NEW: "Yeni Müşteri",
+      CONTACTED: "İletişim Kuruldu",
+      SEARCHING: "Aktif Arıyor",
+      VIEWING: "İlan Geziyor",
+      COMPLETED: "Tamamlandı",
+      CANCELLED: "İptal",
+    };
+
+    // Filtrelenmiş veya tüm listeyi Excel'e aktarabiliriz (Burada tüm müşterileri baz alıyoruz)
+    const excelData = customers.map((customer) => ({
+      "Ad Soyad": customer.name,
+      Telefon: customer.phone,
+      "E-posta": customer.email,
+      Bütçe: customer.budget,
+      Talep: customer.demand,
+      Durum: statusLabels[customer.status] || customer.status,
+      Not: customer.notes,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Müşteriler");
+
+    XLSX.writeFile(workbook, "novis-musteriler.xlsx");
+  };
+
+  // =========================================================
   // DURUM ETİKETİ
   // =========================================================
   const getStatusBadge = (status) => {
@@ -279,24 +311,10 @@ export default function Customers() {
 
   // =========================================================
   // ARAMA
-  //
-  // Şunların tamamında arama yapar:
-  //
-  // - Ad
-  // - Soyad
-  // - Ad + Soyad
-  // - Telefon
-  // - E-posta
-  // - Bütçe
-  // - Talep
-  // - Durum
-  // - Durumun Türkçe karşılığı
-  // - Notlar
   // =========================================================
   const filteredCustomers = customers.filter((customer) => {
     const term = normalizeText(searchTerm);
 
-    // Arama kutusu boşsa bütün müşterileri göster
     if (!term) {
       return true;
     }
@@ -329,7 +347,7 @@ export default function Customers() {
     <Container>
       <div className="py-8 max-w-6xl mx-auto">
         {/* =====================================================
-            BAŞLIK
+            BAŞLIK VE AKSİYON BUTONLARI
         ====================================================== */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
@@ -343,14 +361,24 @@ export default function Customers() {
             </p>
           </div>
 
-          <Button
-            onClick={() => {
-              resetForm();
-              setShowAddModal(true);
-            }}
-          >
-            + Yeni Müşteri Ekle
-          </Button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={exportToExcel}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium transition text-sm flex items-center gap-2 shadow-xs cursor-pointer"
+            >
+              <span>📥</span> Excel'e Aktar
+            </button>
+
+            <Button
+              onClick={() => {
+                resetForm();
+                setShowAddModal(true);
+              }}
+            >
+              + Yeni Müşteri Ekle
+            </Button>
+          </div>
         </div>
 
         {/* =====================================================
@@ -370,7 +398,6 @@ export default function Customers() {
               className="w-full rounded-xl border border-novis-bronze/30 bg-white pl-11 pr-10 py-3 text-novis-anthracite placeholder-gray-400 focus:border-novis-bronze focus:outline-none focus:ring-1 focus:ring-novis-bronze transition text-sm shadow-xs"
             />
 
-            {/* Aramayı temizle */}
             {searchTerm && (
               <button
                 type="button"
@@ -383,7 +410,6 @@ export default function Customers() {
             )}
           </div>
 
-          {/* Arama sonucu sayısı */}
           {!loading && (
             <p className="mt-2 text-xs text-gray-500">
               {searchTerm
@@ -437,7 +463,6 @@ export default function Customers() {
                       key={customer.id}
                       className="hover:bg-gray-50 transition"
                     >
-                      {/* AD SOYAD */}
                       <td className="p-4 font-bold text-novis-anthracite">
                         <div>{customer.name}</div>
 
@@ -451,7 +476,6 @@ export default function Customers() {
                         )}
                       </td>
 
-                      {/* TELEFON */}
                       <td className="p-4 text-gray-600">
                         {customer.phone ? (
                           <a
@@ -465,7 +489,6 @@ export default function Customers() {
                         )}
                       </td>
 
-                      {/* BÜTÇE */}
                       <td className="p-4 text-gray-600 font-medium whitespace-nowrap">
                         {customer.budget
                           ? `${Number(customer.budget).toLocaleString(
@@ -474,15 +497,12 @@ export default function Customers() {
                           : "-"}
                       </td>
 
-                      {/* TALEP */}
                       <td className="p-4 text-gray-600">
                         {customer.demand || "-"}
                       </td>
 
-                      {/* DURUM */}
                       <td className="p-4">{getStatusBadge(customer.status)}</td>
 
-                      {/* NOT */}
                       <td className="p-4 text-gray-600 max-w-xs">
                         {customer.notes ? (
                           <span
@@ -496,7 +516,6 @@ export default function Customers() {
                         )}
                       </td>
 
-                      {/* İŞLEMLER */}
                       <td className="p-4 text-right whitespace-nowrap">
                         <button
                           type="button"

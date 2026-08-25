@@ -1,7 +1,30 @@
+import { useState, useEffect } from "react";
 import Container from "../../components/ui/Container";
-import StatCard from "../../components/ui/StatCard"; // <-- StatCard bileşenimizi import ettik
+import StatCard from "../../components/ui/StatCard";
+import { getDashboardStats } from "../../services/dashboardService";
 
 function Dashboard() {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const data = await getDashboardStats();
+        setStats(data);
+      } catch (err) {
+        console.error("Dashboard verileri yüklenirken hata:", err);
+        setError("İstatistikler yüklenemedi.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   return (
     <Container>
       {/* Üst Başlık */}
@@ -15,69 +38,67 @@ function Dashboard() {
         </p>
       </div>
 
-      {/* İstatistik Kartları Grid Yapısı */}
+      {/* Hata Durumu */}
+      {error && (
+        <div className="mt-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* İstatistik Kartları Grid Yapısı (Gerçek Veriler) */}
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
+          title="Toplam İlan"
+          value={loading ? "..." : (stats?.totalProperties ?? 0)}
+          description="Sistemdeki tüm kayıtlar"
+        />
+        <StatCard
           title="Aktif İlan"
-          value="24"
+          value={loading ? "..." : (stats?.activeProperties ?? 0)}
           description="Yayındaki toplam gayrimenkul"
         />
         <StatCard
           title="Satılık"
-          value="16"
+          value={loading ? "..." : (stats?.forSale ?? 0)}
           description="Satışta olan mülkler"
         />
-        <StatCard title="Kiralık" value="8" description="Kiralık portföy" />
+        <StatCard
+          title="Kiralık"
+          value={loading ? "..." : (stats?.forRent ?? 0)}
+          description="Kiralık portföy"
+        />
+        <StatCard
+          title="Satılan"
+          value={loading ? "..." : (stats?.sold ?? 0)}
+          description="Satışı tamamlananlar"
+        />
+        <StatCard
+          title="Kiralanan"
+          value={loading ? "..." : (stats?.rented ?? 0)}
+          description="Kiraya verilenler"
+        />
+        <StatCard
+          title="Toplam Müşteri"
+          value={loading ? "..." : (stats?.totalCustomers ?? 0)}
+          description="CRM müşteri portföyü"
+        />
         <StatCard
           title="Yeni Talep"
-          value="5"
-          description="İletişim ve bilgi talepleri"
+          value={loading ? "..." : (stats?.newContactRequests ?? 0)}
+          description="Bekleyen iletişim talepleri"
         />
       </div>
 
       {/* Son Talepler / Hızlı Bakış Bölümü */}
       <div className="mt-12 rounded-2xl bg-white p-6 shadow-sm border border-novis-bronze/20">
         <h2 className="text-xl font-bold text-novis-anthracite mb-4">
-          Son İletişim Talepleri
+          Son İletişim Talepleri Özeti
         </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-600">
-            <thead className="border-b border-gray-200 text-xs uppercase text-novis-brown">
-              <tr>
-                <th className="py-3 px-4">İsim</th>
-                <th className="py-3 px-4">Talep Türü</th>
-                <th className="py-3 px-4">Tarih</th>
-                <th className="py-3 px-4">Durum</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-gray-100">
-                <td className="py-3 px-4 font-medium text-novis-anthracite">
-                  Ahmet Yılmaz
-                </td>
-                <td className="py-3 px-4">Satılık Ev</td>
-                <td className="py-3 px-4">Bugün, 14:30</td>
-                <td className="py-3 px-4">
-                  <span className="inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-                    Yeni
-                  </span>
-                </td>
-              </tr>
-              <tr className="border-b border-gray-100">
-                <td className="py-3 px-4 font-medium text-novis-anthracite">
-                  Elif Kaya
-                </td>
-                <td className="py-3 px-4">Kiralık Daire</td>
-                <td className="py-3 px-4">Dün, 11:15</td>
-                <td className="py-3 px-4">
-                  <span className="inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-                    Yeni
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <p className="text-sm text-novis-brown">
+          Yeni gelen iletişim taleplerinin detaylı yönetimi için sol menüden{" "}
+          <strong className="text-novis-anthracite">İletişim Talepleri</strong>{" "}
+          sayfasını ziyaret edebilirsiniz.
+        </p>
       </div>
     </Container>
   );

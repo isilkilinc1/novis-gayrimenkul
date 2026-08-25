@@ -35,10 +35,10 @@ function AdminLayout() {
           </Link>
 
           <Link
-            to="/admin/talepler"
+            to="/admin/iletisim-talepleri"
             className="block rounded-lg px-4 py-3 hover:bg-novis-brown transition"
           >
-            Talepler
+            İletişim Talepleri
           </Link>
 
           <div className="pt-6 mt-6 border-t border-gray-800">

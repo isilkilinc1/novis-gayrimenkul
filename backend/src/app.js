@@ -3,21 +3,45 @@ const cors = require("cors");
 const path = require("path");
 const pool = require("./config/database");
 
-// Rotalarımızı import ediyoruz
+// =====================================================
+// ROUTES
+// =====================================================
+
 const propertyRoutes = require("./routes/propertyRoutes");
 const authRoutes = require("./routes/authRoutes");
-const propertyImageRoutes = require("./routes/propertyImageRoutes"); // <-- Fotoğraf rotalarını ekledik
+const propertyImageRoutes = require("./routes/propertyImageRoutes");
+const customerRoutes = require("./routes/customerRoutes");
+const contactRequestRoutes = require("./routes/contactRequestRoutes");
+
+// =====================================================
+// ERROR MIDDLEWARE
+// =====================================================
+
 const errorMiddleware = require("./middleware/errorMiddleware");
 
+// =====================================================
+// APP
+// =====================================================
+
 const app = express();
+
+// =====================================================
+// GLOBAL MIDDLEWARE
+// =====================================================
 
 app.use(cors());
 app.use(express.json());
 
-// 📁 Yüklenen dosyaları dışarıya açmak için (Static Folder)
+// =====================================================
+// STATIC FILES
+// =====================================================
+
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
-// 1. Basit Sağlık Kontrolü (Health Check)
+// =====================================================
+// HEALTH CHECK
+// =====================================================
+
 app.get("/api/health", (req, res) => {
   res.json({
     success: true,
@@ -25,7 +49,10 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// 2. Veritabanı Bağlantı Testi
+// =====================================================
+// DATABASE TEST
+// =====================================================
+
 app.get("/api/test-db", async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW() AS current_time");
@@ -36,7 +63,8 @@ app.get("/api/test-db", async (req, res) => {
       time: result.rows[0].current_time,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Database test hatası:", error);
+
     res.status(500).json({
       success: false,
       message: "Database bağlantısı başarısız.",
@@ -44,7 +72,10 @@ app.get("/api/test-db", async (req, res) => {
   }
 });
 
-// 3. Oluşturduğumuz Tabloları Listeleme Testi
+// =====================================================
+// TABLES TEST
+// =====================================================
+
 app.get("/api/test-tables", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -59,7 +90,8 @@ app.get("/api/test-tables", async (req, res) => {
       tables: result.rows,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Tablo test hatası:", error);
+
     res.status(500).json({
       success: false,
       message: "Tablolar alınamadı.",
@@ -67,16 +99,44 @@ app.get("/api/test-tables", async (req, res) => {
   }
 });
 
-// 4. İlan Rotaları (Property Routes)
+// =====================================================
+// PROPERTY ROUTES
+// =====================================================
+
 app.use("/api/properties", propertyRoutes);
 
-// 5. İlan Fotoğraf Rotaları (Property Image Routes)
+// =====================================================
+// PROPERTY IMAGE ROUTES
+// =====================================================
+
 app.use("/api/properties/:propertyId/images", propertyImageRoutes);
 
-// 6. Auth Rotaları
+// =====================================================
+// AUTH ROUTES
+// =====================================================
+
 app.use("/api/auth", authRoutes);
 
-// 7. Hata Yakalama Middleware'i (En sonda olmalı)
+// =====================================================
+// CUSTOMER ROUTES
+// =====================================================
+
+app.use("/api/customers", customerRoutes);
+
+// =====================================================
+// CONTACT REQUEST ROUTES
+// =====================================================
+
+app.use("/api/contact-requests", contactRequestRoutes);
+
+// =====================================================
+// ERROR HANDLER
+// =====================================================
+
 app.use(errorMiddleware);
+
+// =====================================================
+// EXPORT
+// =====================================================
 
 module.exports = app;

@@ -14,7 +14,7 @@ import Login from "../pages/admin/Login";
 import Dashboard from "../pages/admin/Dashboard";
 import AdminProperties from "../pages/admin/Properties";
 import CreateProperty from "../pages/admin/CreateProperty";
-import EditProperty from "../pages/admin/EditProperty"; // <-- YENİ İTHALAT
+import EditProperty from "../pages/admin/EditProperty";
 import Customers from "../pages/admin/Customers";
 import ContactRequests from "../pages/admin/ContactRequests";
 
@@ -43,10 +43,12 @@ function AppRouter() {
             <Route
               path="/admin/ilanlar/:id/duzenle"
               element={<EditProperty />}
-            />{" "}
-            {/* <-- YENİ ROTA */}
+            />
             <Route path="/admin/musteriler" element={<Customers />} />
-            <Route path="/admin/talepler" element={<ContactRequests />} />
+            <Route
+              path="/admin/iletisim-talepleri"
+              element={<ContactRequests />}
+            />
           </Route>
         </Route>
       </Routes>

@@ -1,16 +1,21 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const pool = require("./config/database");
 
 // Rotalarımızı import ediyoruz
 const propertyRoutes = require("./routes/propertyRoutes");
 const authRoutes = require("./routes/authRoutes");
+const propertyImageRoutes = require("./routes/propertyImageRoutes"); // <-- Fotoğraf rotalarını ekledik
 const errorMiddleware = require("./middleware/errorMiddleware");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// 📁 Yüklenen dosyaları dışarıya açmak için (Static Folder)
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // 1. Basit Sağlık Kontrolü (Health Check)
 app.get("/api/health", (req, res) => {
@@ -62,13 +67,16 @@ app.get("/api/test-tables", async (req, res) => {
   }
 });
 
-// 4. İlan Rotaları (Property Routes) - BURASI EKSİKTİ, EKLEDİK!
+// 4. İlan Rotaları (Property Routes)
 app.use("/api/properties", propertyRoutes);
 
-// 5. Auth Rotaları
+// 5. İlan Fotoğraf Rotaları (Property Image Routes)
+app.use("/api/properties/:propertyId/images", propertyImageRoutes);
+
+// 6. Auth Rotaları
 app.use("/api/auth", authRoutes);
 
-// 6. Hata Yakalama Middleware'i (En sonda olmalı)
+// 7. Hata Yakalama Middleware'i (En sonda olmalı)
 app.use(errorMiddleware);
 
 module.exports = app;

@@ -11,11 +11,10 @@ const router = express.Router();
 // GET /api/properties -> Sadece ACTIVE (aktif) olan ilanları getir
 router.get("/", propertyController.getActiveProperties);
 
-// GET /api/properties/:id -> Tek bir ilanı getir
-router.get("/:id", propertyController.getPropertyById);
+// --- PUBLIC ---
+router.get("/", propertyController.getActiveProperties);
 
-// --- PROTECTED (SADECE ADMİNİN ERİŞEBİLDİĞİ) ROTALAR ---
-// GET /api/properties/admin/all -> Tüm ilanları (aktif, satılmış vb.) getir
+// --- ADMIN ---
 router.get(
   "/admin/all",
   authenticate,
@@ -23,10 +22,8 @@ router.get(
   propertyController.getAdminProperties,
 );
 
-// POST /api/properties -> Yeni ilan oluştur
 router.post("/", authenticate, requireAdmin, propertyController.createProperty);
 
-// PUT /api/properties/:id -> İlanı güncelle
 router.put(
   "/:id",
   authenticate,
@@ -34,7 +31,6 @@ router.put(
   propertyController.updateProperty,
 );
 
-// PATCH /api/properties/:id/status -> Sadece ilan durumunu güncelle
 router.patch(
   "/:id/status",
   authenticate,
@@ -42,12 +38,14 @@ router.patch(
   propertyController.updatePropertyStatus,
 );
 
-// DELETE /api/properties/:id -> İlanı sil
 router.delete(
   "/:id",
   authenticate,
   requireAdmin,
   propertyController.deleteProperty,
 );
+
+// ID'ye göre ilan
+router.get("/:id", propertyController.getPropertyById);
 
 module.exports = router;

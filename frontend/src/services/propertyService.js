@@ -2,12 +2,12 @@ import axios from "axios";
 
 const API_URL = "http://localhost:5000/api";
 
-// Ziyaretçiler için: Sadece ACTIVE ilanları ve filtreleri (opsiyonel) çeken fonksiyon
+// Ziyaretçiler için: Sadece ACTIVE ilanları, arama, filtreleri ve pagination parametrelerini çeken fonksiyon
 export const getProperties = async (filters = {}) => {
   const response = await axios.get(`${API_URL}/properties`, {
     params: filters,
   });
-  return response.data;
+  return response.data; // { data: [...], pagination: { page, limit, total, totalPages } } döner
 };
 
 // Adminler için: Tüm ilanları (ACTIVE, SOLD, INACTIVE vb.) çeken fonksiyon
@@ -77,4 +77,60 @@ export const deleteProperty = async (id) => {
     },
   });
   return response.data;
+};
+
+// ==========================================
+// 📸 İLAN FOTOĞRAF SERVİSLERİ
+// ==========================================
+
+// 1. İlana ait fotoğrafları getir (Public)
+export const getPropertyImages = async (propertyId) => {
+  const response = await axios.get(
+    `${API_URL}/properties/${propertyId}/images`,
+  );
+  return response.data.data;
+};
+
+// 2. Fotoğraf yükle (FormData ile çoklu yükleme - Admin yetkili)
+export const uploadPropertyImages = async (propertyId, formData) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.post(
+    `${API_URL}/properties/${propertyId}/images`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  return response.data.data;
+};
+
+// 3. Fotoğraf sil (Admin yetkili)
+export const deletePropertyImage = async (propertyId, imageId) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.delete(
+    `${API_URL}/properties/${propertyId}/images/${imageId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  return response.data;
+};
+
+// 4. Kapak fotoğrafı yap (Admin yetkili)
+export const setCoverImage = async (propertyId, imageId) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.patch(
+    `${API_URL}/properties/${propertyId}/images/${imageId}/cover`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  return response.data.data;
 };

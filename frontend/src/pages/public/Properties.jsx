@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Container from "../../components/ui/Container";
 import PropertyCard from "../../components/PropertyCard";
 import Button from "../../components/ui/Button";
@@ -6,10 +6,16 @@ import { getProperties } from "../../services/propertyService";
 
 function Properties() {
   const [properties, setProperties] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    totalPages: 1,
+    total: 0,
+  });
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Filtre State'leri
+  // Arama ve Filtre State'leri
+  const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({
     propertyType: "",
     listingType: "",
@@ -22,55 +28,55 @@ function Properties() {
     district: "",
   });
 
-  // Backend'den filtrelenmiş ilanları çeken bağımsız async fonksiyon
-  const fetchFilteredProperties = async (appliedFilters = {}) => {
-    try {
-      setLoading(true);
-      setError("");
-
-      // Sadece dolu (değeri olan) filtreleri gönderelim
-      const cleanFilters = Object.fromEntries(
-        Object.entries(appliedFilters).filter(([, v]) => v !== ""),
-      );
-
-      const data = await getProperties(cleanFilters);
-      setProperties(data);
-    } catch (err) {
-      console.error("İlanlar yüklenirken hata:", err);
-      setError("İlanlar yüklenirken bir sorun oluştu.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Sayfa ilk yüklendiğinde çalışacak effect
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadInitialData = async () => {
+  // Backend'den filtrelenmiş, aranmış ve sayfalanmış ilanları çeken fonksiyon
+  const fetchProperties = useCallback(
+    async (currentSearch, currentFilters, currentPage) => {
       try {
-        const data = await getProperties();
-        if (isMounted) {
-          setProperties(data);
+        setLoading(true);
+        setError("");
+
+        const queryParams = {
+          search:
+            currentSearch && currentSearch.trim() !== ""
+              ? currentSearch.trim()
+              : undefined,
+          page: currentPage,
+          limit: 9,
+          ...currentFilters,
+        };
+
+        const cleanParams = Object.fromEntries(
+          Object.entries(queryParams).filter(
+            ([, v]) => v !== "" && v !== null && v !== undefined && v !== 0,
+          ),
+        );
+
+        console.log("Gönderilen Temiz Parametreler:", cleanParams);
+
+        const result = await getProperties(cleanParams);
+        setProperties(result.data || result);
+        if (result.pagination) {
+          setPagination(result.pagination);
         }
       } catch (err) {
-        if (isMounted) {
-          console.error("İlanlar yüklenirken hata:", err);
-          setError("İlanlar yüklenirken bir sorun oluştu.");
-        }
+        console.error("Detaylı API Hatası:", err.response?.data || err.message);
+        setError(
+          err.response?.data?.message ||
+            "İlanlar yüklenirken bir sorun oluştu.",
+        );
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
-    };
+    },
+    [],
+  );
 
-    loadInitialData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  // Sayfa ilk yüklendiğinde ilanları çek
+  // Sayfa ilk yüklendiğinde ilanları çek
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchProperties("", filters, 1);
+  }, [fetchProperties, filters]);
 
   // Input değişikliklerini yöneten fonksiyon
   const handleChange = (e) => {
@@ -78,17 +84,24 @@ function Properties() {
     setFilters((prev) => ({
       ...prev,
       [name]: value,
+      ...(name === "propertyType" && value !== "HOUSE" ? { rooms: "" } : {}),
     }));
   };
 
-  // "Filtrele" butonuna basıldığında
-  const handleFilterSubmit = (e) => {
-    e.preventDefault();
-    fetchFilteredProperties(filters);
+  // Sayfa değiştirme fonksiyonu
+  const handlePageChange = (newPage) => {
+    fetchProperties(search, filters, newPage);
   };
 
-  // "Filtreleri Temizle" butonuna basıldığında
+  // "Filtrele" veya "Ara" butonuna basıldığında
+  const handleFilterSubmit = (e) => {
+    e.preventDefault();
+    fetchProperties(search, filters, 1);
+  };
+
+  // "Filtreleri Sıfırla" butonuna basıldığında
   const handleReset = () => {
+    setSearch("");
     const resetState = {
       propertyType: "",
       listingType: "",
@@ -101,7 +114,7 @@ function Properties() {
       district: "",
     };
     setFilters(resetState);
-    fetchFilteredProperties(resetState);
+    fetchProperties("", resetState, 1);
   };
 
   return (
@@ -116,12 +129,32 @@ function Properties() {
         </h1>
 
         <p className="mt-4 text-novis-brown">
-          Satılık ve kiralık en güncel portföyümüzü kriterlerinize göre
-          filtreleyin.
+          Hayalinizdeki gayrimenkulü arayın, kriterlerinize göre filtreleyin.
         </p>
 
+        {/* ARAMA ÇUBUĞU ÜST ALANI */}
+        <div className="mt-8">
+          <form onSubmit={handleFilterSubmit} className="flex gap-3">
+            <div className="relative flex-1">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-novis-brown">
+                🔍
+              </span>
+              <input
+                type="text"
+                placeholder="İlan, konum, başlık veya özellik ara (Örn: Selçuklu, 3+1, arsa)..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-novis-bronze/30 bg-white text-novis-anthracite shadow-sm focus:outline-none focus:border-novis-gold text-sm"
+              />
+            </div>
+            <Button type="submit" className="px-6 rounded-2xl">
+              Ara
+            </Button>
+          </form>
+        </div>
+
         {/* Ana Düzen: Sol Taraf Filtre Paneli, Sağ Taraf İlan Listesi */}
-        <div className="mt-10 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* SOL: FİLTRE PANELİ */}
           <div className="lg:col-span-1">
             <div className="bg-white p-6 rounded-2xl border border-novis-bronze/20 shadow-sm sticky top-24">
@@ -141,7 +174,7 @@ function Properties() {
                     onChange={handleChange}
                     className="w-full p-2.5 rounded-xl border border-novis-bronze/30 bg-white text-novis-anthracite focus:outline-none focus:border-novis-gold"
                   >
-                    <option value="">Tümü</option>
+                    <option value="">Tüm Türler</option>
                     <option value="HOUSE">Konut</option>
                     <option value="LAND">Arsa</option>
                     <option value="COMMERCIAL">Ticari</option>
@@ -276,21 +309,21 @@ function Properties() {
                     onClick={handleReset}
                     className="w-full py-2.5 text-center text-xs text-novis-brown hover:text-novis-anthracite font-medium transition-colors"
                   >
-                    Filtreleri Temizle
+                    Filtreleri Sıfırla
                   </button>
                 </div>
               </form>
             </div>
           </div>
 
-          {/* SAĞ: İLAN LİSTESİ ALANI */}
-          <div className="lg:col-span-3 space-y-4">
+          {/* SAĞ: İLAN LİSTESİ VE PAGINATION ALANI */}
+          <div className="lg:col-span-3 space-y-6">
             {/* Sonuç Sayısı Bildirimi */}
             <div className="bg-white px-6 py-4 rounded-2xl border border-novis-bronze/20 shadow-sm flex items-center justify-between">
               <span className="text-sm font-medium text-novis-anthracite">
                 {loading
-                  ? "İlanlar filtreleniyor..."
-                  : `${properties.length} ilan bulundu.`}
+                  ? "İlanlar aranıyor..."
+                  : `Toplam ${pagination.total ?? properties.length} ilan bulundu.`}
               </span>
             </div>
 
@@ -308,23 +341,76 @@ function Properties() {
               <div className="bg-white p-12 rounded-2xl border border-novis-bronze/20 shadow-sm text-center">
                 <span className="text-4xl block mb-2">🔍</span>
                 <h3 className="font-display text-lg font-bold text-novis-anthracite mb-1">
-                  Aradığınız kriterlere uygun ilan bulunamadı.
+                  Aramanızla eşleşen ilan bulunamadı.
                 </h3>
                 <p className="text-novis-brown text-sm mb-6">
-                  Filtreleri değiştirerek veya sıfırlayarak tekrar
+                  Arama kelimenizi veya filtre kriterlerinizi değiştirmeyi
                   deneyebilirsiniz.
                 </p>
                 <Button onClick={handleReset} variant="secondary">
-                  Filtreleri Sıfırla
+                  Aramayı ve Filtreleri Sıfırla
                 </Button>
               </div>
             ) : (
-              /* İlan Grid Listesi */
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {properties.map((property) => (
-                  <PropertyCard key={property.id} property={property} />
-                ))}
-              </div>
+              <>
+                {/* İlan Grid Listesi */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {properties.map((property) => (
+                    <PropertyCard key={property.id} property={property} />
+                  ))}
+                </div>
+
+                {/* PAGINATION (SAYFALAMA) BUTONLARI */}
+                {pagination.totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 pt-6">
+                    {/* Önceki Sayfa Butonu */}
+                    <button
+                      onClick={() =>
+                        handlePageChange(Math.max(pagination.page - 1, 1))
+                      }
+                      disabled={pagination.page === 1}
+                      className="px-4 py-2 rounded-xl border border-novis-bronze/30 text-sm font-medium text-novis-anthracite disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                    >
+                      ‹ Önceki
+                    </button>
+
+                    {/* Sayfa Numaraları */}
+                    {Array.from(
+                      { length: pagination.totalPages },
+                      (_, index) => {
+                        const pageNum = index + 1;
+                        const isActive = pageNum === pagination.page;
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`w-10 h-10 rounded-xl text-sm font-semibold transition-colors ${
+                              isActive
+                                ? "bg-novis-anthracite text-white shadow-sm"
+                                : "border border-novis-bronze/30 text-novis-anthracite hover:bg-gray-100"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      },
+                    )}
+
+                    {/* Sonraki Sayfa Butonu */}
+                    <button
+                      onClick={() =>
+                        handlePageChange(
+                          Math.min(pagination.page + 1, pagination.totalPages),
+                        )
+                      }
+                      disabled={pagination.page === pagination.totalPages}
+                      className="px-4 py-2 rounded-xl border border-novis-bronze/30 text-sm font-medium text-novis-anthracite disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                    >
+                      Sonraki ›
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createProperty } from "../../services/propertyService";
+import {
+  createProperty,
+  uploadPropertyImages,
+} from "../../services/propertyService";
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -9,6 +12,9 @@ function CreateProperty() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // 📸 Yeni: Fotoğraf state'leri
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   const [formData, setFormData] = useState({
     property_type: "HOUSE",
@@ -51,6 +57,12 @@ function CreateProperty() {
     }));
   };
 
+  // 📸 Dosya seçim fonksiyonu
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setSelectedFiles(files);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -71,12 +83,25 @@ function CreateProperty() {
         longitude: formData.longitude ? Number(formData.longitude) : null,
       };
 
-      await createProperty(payload);
+      // 1. Önce ilanı oluştur ve yeni ilanın verisini al (id'si içinde gelecek)
+      const newProperty = await createProperty(payload);
+      const newPropertyId = newProperty.id;
+
+      // 2. Eğer kullanıcı fotoğraf seçtiyse, yeni oluşan ilan ID'sine fotoğrafları yükle
+      if (selectedFiles.length > 0 && newPropertyId) {
+        const formDataImages = new FormData();
+        selectedFiles.forEach((file) => {
+          formDataImages.append("images", file);
+        });
+        await uploadPropertyImages(newPropertyId, formDataImages);
+      }
+
       navigate("/admin/ilanlar");
     } catch (err) {
       console.error("İlan oluşturma hatası:", err);
       setError(
-        err.response?.data?.message || "İlan oluşturulurken bir hata oluştu.",
+        err.response?.data?.message ||
+          "İlan oluşturulurken veya fotoğraflar yüklenirken bir hata oluştu.",
       );
     } finally {
       setLoading(false);
@@ -85,14 +110,15 @@ function CreateProperty() {
 
   return (
     <Container>
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="font-display text-3xl font-bold text-novis-anthracite">
               Yeni İlan Ekle
             </h1>
             <p className="mt-1 text-sm text-novis-brown">
-              Sisteme yeni bir gayrimenkul ilanı kaydetmek için formu doldurun.
+              Sisteme yeni bir gayrimenkul ilanı kaydetmek ve fotoğraf eklemek
+              için formu doldurun.
             </p>
           </div>
           <Button
@@ -146,7 +172,7 @@ function CreateProperty() {
             <Input
               label="İlan Başlığı *"
               name="title"
-              placeholder={getTitlePlaceholder()} // Dinamik placeholder
+              placeholder={getTitlePlaceholder()}
               value={formData.title}
               onChange={handleChange}
               required
@@ -327,13 +353,37 @@ function CreateProperty() {
             </>
           )}
 
+          {/* 📸 YENİ İLAN OLUŞTURURKEN FOTOĞRAF YÜKLEME ALANI */}
+          <div className="pt-4 border-t border-gray-100">
+            <label className="block text-sm font-bold text-novis-anthracite mb-2">
+              İlan Fotoğrafları (İsteğe Bağlı)
+            </label>
+            <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center bg-gray-50">
+              <input
+                type="file"
+                multiple
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleFileChange}
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-novis-anthracite file:text-white hover:file:bg-black cursor-pointer"
+              />
+              {selectedFiles.length > 0 && (
+                <p className="mt-2 text-xs text-novis-bronze font-medium">
+                  ✓ {selectedFiles.length} fotoğraf seçildi. İlk yüklenen kapak
+                  fotoğrafı olacaktır.
+                </p>
+              )}
+            </div>
+          </div>
+
           <div className="pt-4 border-t border-gray-100 flex justify-end">
             <Button
               type="submit"
               disabled={loading}
               className="w-full sm:w-auto"
             >
-              {loading ? "Kaydediliyor..." : "İlanı Kaydet"}
+              {loading
+                ? "Kaydediliyor..."
+                : "İlanı Kaydet ve Fotoğrafları Yükle"}
             </Button>
           </div>
         </form>

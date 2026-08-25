@@ -1,6 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getPropertyById } from "../../services/propertyService";
+import {
+  getPropertyById,
+  getPropertyImages,
+} from "../../services/propertyService";
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
@@ -9,25 +12,33 @@ function PropertyDetail() {
   const { id } = useParams();
 
   const [property, setProperty] = useState(null);
+  const [images, setImages] = useState([]);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Sayfa açıldığında URL'deki id ile backend'den tekil ilanı çekiyoruz
-  useEffect(() => {
-    const fetchProperty = async () => {
-      try {
-        const data = await getPropertyById(id);
-        setProperty(data);
-      } catch (err) {
-        console.error("İlan detayları yüklenirken hata:", err);
-        setError("İlan bulunamadı veya yüklenirken bir hata oluştu.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Sayfa açıldığında URL'deki id ile ilanı ve fotoğraflarını çekiyoruz
+  const fetchPropertyData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getPropertyById(id);
+      setProperty(data);
 
-    fetchProperty();
+      const imageListData = await getPropertyImages(id);
+      setImages(imageListData);
+    } catch (err) {
+      console.error("İlan detayları veya fotoğraflar yüklenirken hata:", err);
+      setError("İlan bulunamadı veya yüklenirken bir hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchPropertyData();
+  }, [fetchPropertyData]);
 
   // 1. Yükleniyor Durumu
   if (loading) {
@@ -75,6 +86,12 @@ function PropertyDetail() {
     RENT: "Kiralık",
   };
 
+  // Aktif gösterilecek ana fotoğraf URL'i (yoksa yedek placeholder)
+  const currentImage =
+    images.length > 0
+      ? `http://localhost:5000${images[activeImageIndex].image_url}`
+      : "/images/property-placeholder.jpg";
+
   return (
     <section className="py-12 sm:py-16 bg-gray-50 min-h-screen">
       <Container>
@@ -113,13 +130,48 @@ function PropertyDetail() {
             </div>
           </div>
 
-          {/* Geçici Görsel Alanı */}
-          <div className="relative h-72 sm:h-96 rounded-2xl overflow-hidden bg-novis-bronze/10 border border-novis-bronze/20">
-            <img
-              src="/images/property-placeholder.jpg"
-              alt={property.title}
-              className="w-full h-full object-cover"
-            />
+          {/* 📸 FOTOĞRAF GALERİSİ ALANI */}
+          <div className="bg-white p-4 sm:p-6 rounded-2xl border border-novis-bronze/20 shadow-sm space-y-4">
+            {/* Büyük Ana Fotoğraf / Lightbox Tetikleyicisi */}
+            <div
+              className="relative h-72 sm:h-96 rounded-xl overflow-hidden bg-novis-bronze/10 border border-novis-bronze/20 cursor-pointer group"
+              onClick={() => setLightboxOpen(true)}
+            >
+              <img
+                src={currentImage}
+                alt={property.title}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
+              />
+              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <span className="bg-black/70 text-white text-xs px-4 py-2 rounded-lg font-medium backdrop-blur-xs shadow-sm">
+                  🔍 Büyük Boyutta Görüntüle
+                </span>
+              </div>
+            </div>
+
+            {/* Küçük Galeri Küçük Resimleri (Thumbnails) */}
+            {images.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {images.map((img, index) => (
+                  <button
+                    key={img.id}
+                    type="button"
+                    onClick={() => setActiveImageIndex(index)}
+                    className={`relative w-20 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition ${
+                      activeImageIndex === index
+                        ? "border-novis-gold shadow-sm scale-102"
+                        : "border-transparent opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <img
+                      src={`http://localhost:5000${img.image_url}`}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Gayrimenkul Türüne Göre Dinamik Özellikler Alanı */}
@@ -260,6 +312,55 @@ function PropertyDetail() {
             </div>
           </div>
         </div>
+
+        {/* 🔍 LIGHTBOX (BÜYÜK FOTOĞRAF MODALI) */}
+        {lightboxOpen && (
+          <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-xs">
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(false)}
+              className="absolute top-6 right-6 text-white text-xl bg-white/10 hover:bg-white/25 w-10 h-10 rounded-full flex items-center justify-center transition"
+            >
+              ✕
+            </button>
+
+            <div className="relative max-w-5xl max-h-[85vh] w-full flex items-center justify-center">
+              <img
+                src={currentImage}
+                alt=""
+                className="max-h-[80vh] max-w-full object-contain rounded-lg shadow-2xl"
+              />
+
+              {/* Önceki / Sonraki Butonları */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveImageIndex((prev) =>
+                        prev === 0 ? images.length - 1 : prev - 1,
+                      )
+                    }
+                    className="absolute left-4 text-white bg-black/60 hover:bg-black p-3 rounded-full transition shadow-md"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveImageIndex((prev) =>
+                        prev === images.length - 1 ? 0 : prev + 1,
+                      )
+                    }
+                    className="absolute right-4 text-white bg-black/60 hover:bg-black p-3 rounded-full transition shadow-md"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </Container>
     </section>
   );

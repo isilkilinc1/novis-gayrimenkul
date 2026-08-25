@@ -3,12 +3,17 @@ import Badge from "./ui/Badge";
 import Button from "./ui/Button";
 
 function PropertyCard({ property }) {
+  // İlanın kapak fotoğrafı varsa onu al, yoksa varsayılan placeholder görseli göster
+  const imageUrl = property.cover_image
+    ? `http://localhost:5000${property.cover_image}`
+    : "/images/property-placeholder.jpg";
+
   return (
     <article className="overflow-hidden rounded-2xl border border-novis-bronze/20 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
       {/* Fotoğraf Alanı */}
       <div className="relative h-56 bg-novis-bronze/10">
         <img
-          src="/images/property-placeholder.jpg"
+          src={imageUrl}
           alt={property.title}
           className="h-full w-full object-cover"
         />

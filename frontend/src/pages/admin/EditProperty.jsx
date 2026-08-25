@@ -7,6 +7,7 @@ import {
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
+import PropertyImageManager from "../../components/PropertyImageManager";
 
 function EditProperty() {
   const { id } = useParams();
@@ -421,6 +422,11 @@ function EditProperty() {
             </Button>
           </div>
         </form>
+
+        {/* İlan Fotoğraf Yönetim Alanı */}
+        <div className="mt-8">
+          <PropertyImageManager propertyId={id} />
+        </div>
       </div>
     </Container>
   );

@@ -13,9 +13,10 @@ function Home() {
     const fetchProperties = async () => {
       try {
         const data = await getProperties();
-        setProperties(data);
+        setProperties(data.data || []);
       } catch (error) {
         console.error("İlanlar yüklenirken hata oluştu:", error);
+        setProperties([]);
       } finally {
         setLoading(false);
       }

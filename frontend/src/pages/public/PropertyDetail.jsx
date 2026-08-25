@@ -7,6 +7,7 @@ import {
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
+import PropertyMap from "../../components/PropertyMap"; // 🗺️ Harita bileşenini import ettik
 
 function PropertyDetail() {
   const { id } = useParams();
@@ -28,7 +29,7 @@ function PropertyDetail() {
       const imageListData = await getPropertyImages(id);
       setImages(imageListData);
     } catch (err) {
-      console.error("İlan detayları veya fotoğraflar yüklenirken hata:", err);
+      console.error("İlan detayları veya fotoğraflار yüklenirken hata:", err);
       setError("İlan bulunamadı veya yüklenirken bir hata oluştu.");
     } finally {
       setLoading(false);
@@ -181,7 +182,6 @@ function PropertyDetail() {
             </h2>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 text-sm">
-              {/* Ortak Alan: m² */}
               {property.square_meters && (
                 <div className="p-4 bg-novis-cream/30 rounded-xl border border-novis-bronze/10">
                   <span className="text-novis-brown block mb-1">
@@ -193,7 +193,6 @@ function PropertyDetail() {
                 </div>
               )}
 
-              {/* Sadece Konut (HOUSE) İçin Özellikler */}
               {property.property_type === "HOUSE" && (
                 <>
                   {property.rooms && (
@@ -246,7 +245,6 @@ function PropertyDetail() {
                 </>
               )}
 
-              {/* İşyeri (COMMERCIAL) İçin Özellikler */}
               {property.property_type === "COMMERCIAL" && (
                 <>
                   {property.floor !== null && property.floor !== undefined && (
@@ -295,20 +293,65 @@ function PropertyDetail() {
             </p>
           </div>
 
-          {/* İletişim / Butonlar Alanı */}
-          <div className="bg-novis-anthracite p-6 sm:p-8 rounded-2xl text-white flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-              <h3 className="font-display text-xl font-bold">
-                Bu ilanla ilgileniyor musunuz?
-              </h3>
-              <p className="text-gray-300 text-sm mt-1">
-                Hemen bizimle iletişime geçin, detayları görüşelim.
-              </p>
-            </div>
-            <div className="flex gap-3 w-full sm:w-auto">
-              <Button className="w-full sm:w-auto bg-novis-gold hover:bg-novis-gold/90 text-white">
-                📞 Ara
-              </Button>
+          {/* 📍 HARİTA BÖLÜMÜ */}
+          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-novis-bronze/20 shadow-sm">
+            <h3 className="font-display text-xl font-bold text-novis-anthracite mb-2 flex items-center gap-2">
+              <span>📍 Konum</span>
+            </h3>
+            <p className="text-sm text-novis-brown mb-4">
+              {property.district} / {property.city}{" "}
+              {property.neighborhood ? `(${property.neighborhood} Mah.)` : ""}
+            </p>
+            <PropertyMap
+              latitude={property.latitude}
+              longitude={property.longitude}
+              title={property.title}
+              address={`${property.district} / ${property.city}`}
+            />
+          </div>
+
+          {/* 📞 İLETİŞİM AKSİYON BUTONLARI (Ara, WhatsApp, E-posta) */}
+          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-novis-bronze/20 shadow-sm">
+            <h3 className="font-display text-xl font-bold text-novis-anthracite mb-2">
+              İletişime Geç
+            </h3>
+            <p className="text-sm text-novis-brown mb-6">
+              Bu ilanla ilgileniyorsanız hemen aşağıdaki kanallardan bize
+              ulaşabilirsiniz.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Ara Butonu */}
+              <a
+                href="tel:+905321234567"
+                className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 px-4 rounded-xl font-semibold transition shadow-xs text-sm"
+              >
+                <span>📞</span> Ara
+              </a>
+
+              {/* WhatsApp Butonu */}
+              <a
+                href={`https://wa.me/905321234567?text=${encodeURIComponent(
+                  `Merhaba, NOVIS Gayrimenkul sitesindeki "${property.title}" ilanı hakkında bilgi almak istiyorum.`,
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3.5 px-4 rounded-xl font-semibold transition shadow-xs text-sm"
+              >
+                <span>💬</span> WhatsApp
+              </a>
+
+              {/* E-posta Butonu */}
+              <a
+                href={`mailto:info@novisgayrimenkul.com?subject=${encodeURIComponent(
+                  `${property.title} İlanı Hakkında Bilgi`,
+                )}&body=${encodeURIComponent(
+                  `Merhaba,\n\nWeb sitenizdeki "${property.title}" (ID: ${property.id}) ilanı hakkında detaylı bilgi almak istiyorum.\n\nİyi çalışmalar.`,
+                )}`}
+                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3.5 px-4 rounded-xl font-semibold transition shadow-xs text-sm"
+              >
+                <span>✉️</span> E-posta
+              </a>
             </div>
           </div>
         </div>

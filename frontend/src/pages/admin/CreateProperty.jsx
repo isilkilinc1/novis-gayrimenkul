@@ -13,7 +13,7 @@ function CreateProperty() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 📸 Yeni: Fotoğraf state'leri
+  // Fotoğraf state'leri
   const [selectedFiles, setSelectedFiles] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -57,7 +57,7 @@ function CreateProperty() {
     }));
   };
 
-  // 📸 Dosya seçim fonksiyonu
+  // Dosya seçim fonksiyonu
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     setSelectedFiles(files);
@@ -83,7 +83,7 @@ function CreateProperty() {
         longitude: formData.longitude ? Number(formData.longitude) : null,
       };
 
-      // 1. Önce ilanı oluştur ve yeni ilanın verisini al (id'si içinde gelecek)
+      // 1. Önce ilanı oluştur ve yeni ilanın ID'sini al
       const newProperty = await createProperty(payload);
       const newPropertyId = newProperty.id;
 
@@ -254,6 +254,28 @@ function CreateProperty() {
             onChange={handleChange}
           />
 
+          {/* 📍 HARİTA KOORDİNATLARI */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-novis-cream/20 rounded-xl border border-novis-bronze/20">
+            <Input
+              label="Enlem (Latitude)"
+              name="latitude"
+              type="number"
+              step="any"
+              placeholder="Örn. 37.8746"
+              value={formData.latitude}
+              onChange={handleChange}
+            />
+            <Input
+              label="Boylam (Longitude)"
+              name="longitude"
+              type="number"
+              step="any"
+              placeholder="Örn. 32.4932"
+              value={formData.longitude}
+              onChange={handleChange}
+            />
+          </div>
+
           {formData.property_type === "LAND" ? (
             <div className="grid grid-cols-1 gap-4">
               <Input
@@ -353,7 +375,7 @@ function CreateProperty() {
             </>
           )}
 
-          {/* 📸 YENİ İLAN OLUŞTURURKEN FOTOĞRAF YÜKLEME ALANI */}
+          {/* İlan Fotoğraf Yükleme Alanı */}
           <div className="pt-4 border-t border-gray-100">
             <label className="block text-sm font-bold text-novis-anthracite mb-2">
               İlan Fotoğrafları (İsteğe Bağlı)

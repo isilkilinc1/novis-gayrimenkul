@@ -125,14 +125,14 @@ function EditProperty() {
 
   return (
     <Container>
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="font-display text-3xl font-bold text-novis-anthracite">
               İlanı Düzenle
             </h1>
             <p className="mt-1 text-sm text-novis-brown">
-              Mevcut gayrimenkul ilan bilgilerini güncelleyin.
+              Mevcut gayrimenkul ilan bilgilerini ve konumunu güncelleyin.
             </p>
           </div>
           <Button
@@ -308,6 +308,28 @@ function EditProperty() {
             value={formData.address}
             onChange={handleChange}
           />
+
+          {/* 📍 HARİTA KOORDİNATLARI */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-novis-cream/20 rounded-xl border border-novis-bronze/20">
+            <Input
+              label="Enlem (Latitude)"
+              name="latitude"
+              type="number"
+              step="any"
+              placeholder="Örn. 37.8746"
+              value={formData.latitude}
+              onChange={handleChange}
+            />
+            <Input
+              label="Boylam (Longitude)"
+              name="longitude"
+              type="number"
+              step="any"
+              placeholder="Örn. 32.4932"
+              value={formData.longitude}
+              onChange={handleChange}
+            />
+          </div>
 
           {formData.property_type === "LAND" ? (
             <div className="grid grid-cols-1 gap-4">

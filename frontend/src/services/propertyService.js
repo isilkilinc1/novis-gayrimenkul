@@ -2,45 +2,60 @@ import axios from "axios";
 
 const API_URL = "http://localhost:5000/api";
 
-// Ziyaretçiler için: Sadece ACTIVE ilanları, arama, filtreleri ve pagination parametrelerini çeken fonksiyon
+// ======================================================
+// PUBLIC - İLANLAR
+// ======================================================
+
+// Ziyaretçiler için aktif ilanları getir
 export const getProperties = async (filters = {}) => {
   const response = await axios.get(`${API_URL}/properties`, {
     params: filters,
   });
-  return response.data; // { data: [...], pagination: { page, limit, total, totalPages } } döner
+
+  return response.data;
 };
 
-// Adminler için: Tüm ilanları (ACTIVE, SOLD, INACTIVE vb.) çeken fonksiyon
+// ID'ye göre ilan getir
+export const getPropertyById = async (id) => {
+  const response = await axios.get(`${API_URL}/properties/${id}`);
+
+  return response.data;
+};
+
+// ======================================================
+// ADMIN - İLANLAR
+// ======================================================
+
+// Admin için tüm ilanları getir
 export const getAdminProperties = async () => {
   const token = localStorage.getItem("token");
+
   const response = await axios.get(`${API_URL}/properties/admin/all`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
+
   return response.data;
 };
 
-// ID'ye göre tek ilanı backend'den çeken fonksiyon
-export const getPropertyById = async (id) => {
-  const response = await axios.get(`${API_URL}/properties/${id}`);
-  return response.data;
-};
-
-// Yeni ilan oluşturan fonksiyon
+// Yeni ilan oluştur
 export const createProperty = async (propertyData) => {
   const token = localStorage.getItem("token");
+
   const response = await axios.post(`${API_URL}/properties`, propertyData, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
+
   return response.data;
 };
 
-// İlanı güncelleyen fonksiyon
+// İlanı güncelle
 export const updateProperty = async (id, propertyData) => {
   const token = localStorage.getItem("token");
+
   const response = await axios.put(
     `${API_URL}/properties/${id}`,
     propertyData,
@@ -50,12 +65,14 @@ export const updateProperty = async (id, propertyData) => {
       },
     },
   );
+
   return response.data;
 };
 
-// Sadece ilan durumunu (status) güncelleyen fonksiyon
+// İlan durumunu güncelle
 export const updatePropertyStatus = async (id, status) => {
   const token = localStorage.getItem("token");
+
   const response = await axios.patch(
     `${API_URL}/properties/${id}/status`,
     { status },
@@ -65,64 +82,78 @@ export const updatePropertyStatus = async (id, status) => {
       },
     },
   );
+
   return response.data;
 };
 
-// İlanı silen fonksiyon
+// İlanı sil
 export const deleteProperty = async (id) => {
   const token = localStorage.getItem("token");
+
   const response = await axios.delete(`${API_URL}/properties/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
+
   return response.data;
 };
 
-// ==========================================
-// 📸 İLAN FOTOĞRAF SERVİSLERİ
-// ==========================================
+// ======================================================
+// İLAN FOTOĞRAFLARI
+// ======================================================
 
-// 1. İlana ait fotoğrafları getir (Public)
+// İlanın fotoğraflarını getir
 export const getPropertyImages = async (propertyId) => {
   const response = await axios.get(
     `${API_URL}/properties/${propertyId}/images`,
   );
-  return response.data.data;
+
+  return response.data;
 };
 
-// 2. Fotoğraf yükle (FormData ile çoklu yükleme - Admin yetkili)
+// İlan fotoğraflarını yükle
 export const uploadPropertyImages = async (propertyId, formData) => {
   const token = localStorage.getItem("token");
+
   const response = await axios.post(
     `${API_URL}/properties/${propertyId}/images`,
     formData,
     {
       headers: {
         Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
       },
     },
   );
-  return response.data.data;
+
+  return response.data;
 };
 
-// 3. Fotoğraf sil (Admin yetkili)
-export const deletePropertyImage = async (propertyId, imageId) => {
+// İlan fotoğrafını sil
+export const deletePropertyImage = async (imageId) => {
   const token = localStorage.getItem("token");
+
   const response = await axios.delete(
-    `${API_URL}/properties/${propertyId}/images/${imageId}`,
+    `${API_URL}/properties/images/${imageId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     },
   );
+
   return response.data;
 };
 
-// 4. Kapak fotoğrafı yap (Admin yetkili)
+// ======================================================
+// KAPAK FOTOĞRAFI
+// ======================================================
+
+// Fotoğrafı kapak fotoğrafı yap
 export const setCoverImage = async (propertyId, imageId) => {
   const token = localStorage.getItem("token");
+
   const response = await axios.patch(
     `${API_URL}/properties/${propertyId}/images/${imageId}/cover`,
     {},
@@ -132,5 +163,6 @@ export const setCoverImage = async (propertyId, imageId) => {
       },
     },
   );
-  return response.data.data;
+
+  return response.data;
 };

@@ -7,6 +7,7 @@ import {
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
+import AdminPropertyMap from "../../components/AdminPropertyMap";
 
 function CreateProperty() {
   const navigate = useNavigate();
@@ -54,6 +55,30 @@ function CreateProperty() {
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleLocationSelect = ({
+    latitude,
+    longitude,
+    city,
+    district,
+    neighborhood,
+    address,
+    updateAddress,
+  }) => {
+    setFormData((prev) => ({
+      ...prev,
+      latitude: latitude.toFixed(7),
+      longitude: longitude.toFixed(7),
+      ...(updateAddress
+        ? {
+            city: city || prev.city,
+            district: district || prev.district,
+            neighborhood: neighborhood || prev.neighborhood,
+            address: address || prev.address,
+          }
+        : {}),
     }));
   };
 
@@ -254,25 +279,16 @@ function CreateProperty() {
             onChange={handleChange}
           />
 
-          {/* 📍 HARİTA KOORDİNATLARI */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-novis-cream/20 rounded-xl border border-novis-bronze/20">
-            <Input
-              label="Enlem (Latitude)"
-              name="latitude"
-              type="number"
-              step="any"
-              placeholder="Örn. 37.8746"
-              value={formData.latitude}
-              onChange={handleChange}
-            />
-            <Input
-              label="Boylam (Longitude)"
-              name="longitude"
-              type="number"
-              step="any"
-              placeholder="Örn. 32.4932"
-              value={formData.longitude}
-              onChange={handleChange}
+          {/* 📍 HARİTA VE KONUM SEÇİMİ */}
+          <div className="p-4 bg-novis-cream/20 rounded-xl border border-novis-bronze/20">
+            <AdminPropertyMap
+              latitude={formData.latitude}
+              longitude={formData.longitude}
+              city={formData.city}
+              district={formData.district}
+              neighborhood={formData.neighborhood}
+              address={formData.address}
+              onLocationSelect={handleLocationSelect}
             />
           </div>
 

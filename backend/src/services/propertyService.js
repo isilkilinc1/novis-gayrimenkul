@@ -175,13 +175,85 @@ const createProperty = async (propertyData) => {
     longitude,
   } = propertyData;
 
+  // Koordinatları kontrol et
+  const parsedLatitude =
+    latitude === null || latitude === "" || latitude === undefined
+      ? null
+      : Number(latitude);
+
+  const parsedLongitude =
+    longitude === null || longitude === "" || longitude === undefined
+      ? null
+      : Number(longitude);
+
+  // Latitude kontrolü
+  if (
+    parsedLatitude !== null &&
+    (!Number.isFinite(parsedLatitude) ||
+      parsedLatitude < -90 ||
+      parsedLatitude > 90)
+  ) {
+    const error = new Error("Latitude değeri -90 ile 90 arasında olmalıdır.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Longitude kontrolü
+  if (
+    parsedLongitude !== null &&
+    (!Number.isFinite(parsedLongitude) ||
+      parsedLongitude < -180 ||
+      parsedLongitude > 180)
+  ) {
+    const error = new Error(
+      "Longitude değeri -180 ile 180 arasında olmalıdır.",
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  console.log("========== İLAN VERİLERİ ==========");
+  console.log("property_type:", property_type);
+  console.log("title:", title);
+  console.log("description:", description);
+  console.log("listing_type:", listing_type);
+  console.log("status:", status);
+  console.log("price:", price);
+  console.log("city:", city);
+  console.log("district:", district);
+  console.log("neighborhood:", neighborhood);
+  console.log("address:", address);
+  console.log("rooms:", rooms);
+  console.log("square_meters:", square_meters);
+  console.log("floor:", floor);
+  console.log("building_age:", building_age);
+  console.log("heating_type:", heating_type);
+  console.log("balcony:", balcony);
+  console.log("latitude:", parsedLatitude);
+  console.log("longitude:", parsedLongitude);
+  console.log("==================================");
+
   const result = await pool.query(
     `
     INSERT INTO properties (
-      property_type, title, description, listing_type, status, price,
-      city, district, neighborhood, address, rooms,
-      square_meters, floor, building_age, heating_type,
-      balcony, latitude, longitude
+      property_type,
+      title,
+      description,
+      listing_type,
+      status,
+      price,
+      city,
+      district,
+      neighborhood,
+      address,
+      rooms,
+      square_meters,
+      floor,
+      building_age,
+      heating_type,
+      balcony,
+      latitude,
+      longitude
     )
     VALUES (
       $1, $2, $3, $4, $5,
@@ -208,8 +280,8 @@ const createProperty = async (propertyData) => {
       building_age,
       heating_type,
       balcony,
-      latitude,
-      longitude,
+      parsedLatitude,
+      parsedLongitude,
     ],
   );
 

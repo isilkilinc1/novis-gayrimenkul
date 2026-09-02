@@ -28,7 +28,7 @@ function Home() {
   return (
     <div>
       {/* --- HERO BÖLÜMÜ (Ortalanmış Tasarım) --- */}
-      <section className="relative min-h-[600px] lg:min-h-[700px] flex items-center justify-center overflow-hidden bg-novis-anthracite">
+      <section className="relative min-h-150 lg:min-h-175 flex items-center justify-center overflow-hidden bg-novis-anthracite">
         {/* Arka Plan Görseli */}
         <div className="absolute inset-0 z-0">
           <img

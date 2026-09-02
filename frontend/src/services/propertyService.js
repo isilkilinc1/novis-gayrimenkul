@@ -131,11 +131,11 @@ export const uploadPropertyImages = async (propertyId, formData) => {
 };
 
 // İlan fotoğrafını sil
-export const deletePropertyImage = async (imageId) => {
+export const deletePropertyImage = async (propertyId, imageId) => {
   const token = localStorage.getItem("token");
 
   const response = await axios.delete(
-    `${API_URL}/properties/images/${imageId}`,
+    `${API_URL}/properties/${propertyId}/images/${imageId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

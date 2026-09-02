@@ -1,27 +1,68 @@
 const express = require("express");
-const router = express.Router({ mergeParams: true }); // :propertyId parametresini yakalayabilmek için mergeParams: true kritik!
-const PropertyImageController = require("../controllers/propertyImageController");
-const upload = require("../middleware/uploadMiddleware");
-const authMiddleware = require("../middleware/authMiddleware"); // Eğer daha önce projede admin yetki kontrolü için auth middleware kullandıysan
 
-// 1. İlana ait fotoğrafları listele (Herkes görebilir - Public)
+const router = express.Router({ mergeParams: true });
+
+const PropertyImageController = require("../controllers/propertyImageController");
+
+const upload = require("../middleware/uploadMiddleware");
+
+const { authenticate } = require("../middleware/authMiddleware");
+const { requireAdmin } = require("../middleware/roleMiddleware");
+
+// =====================================================
+// PUBLIC
+// FOTOĞRAFLARI GÖRÜNTÜLE
+// =====================================================
+
 router.get("/", PropertyImageController.getImages);
 
-// 2. İlana çoklu fotoğraf yükle (Sadece Admin / Token gerekli)
-// upload.array("images", 10) -> Maksimum 10 fotoğraf aynı anda yüklenebilir
+// =====================================================
+// ADMIN
+// FOTOĞRAF YÜKLE
+// =====================================================
+
 router.post(
   "/",
+  authenticate,
+  requireAdmin,
   upload.array("images", 10),
   PropertyImageController.uploadImages,
 );
 
-// 3. Fotoğrafı sil
-router.delete("/:imageId", PropertyImageController.deleteImage);
+// =====================================================
+// ADMIN
+// FOTOĞRAF SİL
+// =====================================================
 
-// 4. Kapak fotoğrafı yap
-router.patch("/:imageId/cover", PropertyImageController.setCover);
+router.delete(
+  "/:imageId",
+  authenticate,
+  requireAdmin,
+  PropertyImageController.deleteImage,
+);
 
-// 5. Fotoğraf sıralamasını güncelle
-router.patch("/reorder", PropertyImageController.reorderImages);
+// =====================================================
+// ADMIN
+// KAPAK FOTOĞRAFI YAP
+// =====================================================
+
+router.patch(
+  "/:imageId/cover",
+  authenticate,
+  requireAdmin,
+  PropertyImageController.setCover,
+);
+
+// =====================================================
+// ADMIN
+// FOTOĞRAF SIRALAMASI
+// =====================================================
+
+router.patch(
+  "/reorder",
+  authenticate,
+  requireAdmin,
+  PropertyImageController.reorderImages,
+);
 
 module.exports = router;

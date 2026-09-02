@@ -11,9 +11,6 @@ const router = express.Router();
 // GET /api/properties -> Sadece ACTIVE (aktif) olan ilanları getir
 router.get("/", propertyController.getActiveProperties);
 
-// --- PUBLIC ---
-router.get("/", propertyController.getActiveProperties);
-
 // --- ADMIN ---
 router.get(
   "/admin/all",

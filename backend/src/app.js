@@ -130,12 +130,16 @@ app.use("/api/customers", customerRoutes);
 app.use("/api/contact-requests", contactRequestRoutes);
 
 // =====================================================
+// DASHBOARD ROUTES
+// =====================================================
+
+app.use("/api/dashboard", dashboardRoutes);
+
+// =====================================================
 // ERROR HANDLER
 // =====================================================
 
 app.use(errorMiddleware);
-
-app.use("/api/dashboard", dashboardRoutes);
 
 // =====================================================
 // EXPORT

@@ -21,7 +21,7 @@ export default function PropertyMap({ latitude, longitude, title, address }) {
   const lng = longitude ? Number(longitude) : 32.4932;
 
   return (
-    <div className="w-full h-[300px] md:h-[350px] rounded-xl overflow-hidden border border-novis-bronze/20 shadow-xs z-10 relative">
+    <div className="w-full h-75 md:h-87.5 rounded-xl overflow-hidden border border-novis-bronze/20 shadow-xs z-10 relative">
       <MapContainer
         center={[lat, lng]}
         zoom={14}

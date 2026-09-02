@@ -3,19 +3,57 @@ const router = express.Router();
 
 const customerController = require("../controllers/customerController");
 
-// Tüm müşterileri getir
-router.get("/", customerController.getCustomers);
+const { authenticate } = require("../middleware/authMiddleware");
+const { requireAdmin } = require("../middleware/roleMiddleware");
 
-// Tek müşteriyi getir
-router.get("/:id", customerController.getCustomer);
+// =====================================================
+// TÜM MÜŞTERİLERİ GETİR
+// SADECE ADMIN
+// =====================================================
 
-// Yeni müşteri oluştur
-router.post("/", customerController.createNewCustomer);
+router.get("/", authenticate, requireAdmin, customerController.getCustomers);
 
-// Müşteriyi güncelle
-router.put("/:id", customerController.updateExistingCustomer);
+// =====================================================
+// TEK MÜŞTERİYİ GETİR
+// SADECE ADMIN
+// =====================================================
 
-// Müşteriyi sil
-router.delete("/:id", customerController.removeCustomer);
+router.get("/:id", authenticate, requireAdmin, customerController.getCustomer);
+
+// =====================================================
+// YENİ MÜŞTERİ OLUŞTUR
+// SADECE ADMIN
+// =====================================================
+
+router.post(
+  "/",
+  authenticate,
+  requireAdmin,
+  customerController.createNewCustomer,
+);
+
+// =====================================================
+// MÜŞTERİ GÜNCELLE
+// SADECE ADMIN
+// =====================================================
+
+router.put(
+  "/:id",
+  authenticate,
+  requireAdmin,
+  customerController.updateExistingCustomer,
+);
+
+// =====================================================
+// MÜŞTERİ SİL
+// SADECE ADMIN
+// =====================================================
+
+router.delete(
+  "/:id",
+  authenticate,
+  requireAdmin,
+  customerController.removeCustomer,
+);
 
 module.exports = router;

@@ -356,8 +356,8 @@ export default function Customers() {
             </h1>
 
             <p className="mt-1 text-sm text-novis-brown">
-              Dayının potansiyel müşterilerini, bütçelerini ve taleplerini
-              buradan takip edebilirsin.
+              Potansiyel müşterilerinizi, bütçelerini ve taleplerini buradan
+              takip edebilirsiniz.
             </p>
           </div>
 
@@ -392,7 +392,7 @@ export default function Customers() {
 
             <input
               type="text"
-              placeholder="Ad, soyad, e-posta, telefon, durum, talep veya not ara..."
+              placeholder="Ad, soyad, e-posta, telefon, durum, talep ara..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-xl border border-novis-bronze/30 bg-white pl-11 pr-10 py-3 text-novis-anthracite placeholder-gray-400 focus:border-novis-bronze focus:outline-none focus:ring-1 focus:ring-novis-bronze transition text-sm shadow-xs"

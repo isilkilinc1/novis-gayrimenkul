@@ -18,6 +18,7 @@ import EditProperty from "../pages/admin/EditProperty";
 import Customers from "../pages/admin/Customers";
 import ContactRequests from "../pages/admin/ContactRequests";
 import AccountSettings from "../pages/admin/AccountSettings";
+import SiteSettings from "../pages/admin/SiteSettings";
 
 function AppRouter() {
   return (
@@ -41,11 +42,14 @@ function AppRouter() {
             <Route path="/admin" element={<Dashboard />} />
             <Route path="/admin/ilanlar" element={<AdminProperties />} />
             <Route path="/admin/ilanlar/yeni" element={<CreateProperty />} />
+
             <Route
               path="/admin/ilanlar/:id/duzenle"
               element={<EditProperty />}
             />
+
             <Route path="/admin/musteriler" element={<Customers />} />
+
             <Route
               path="/admin/iletisim-talepleri"
               element={<ContactRequests />}
@@ -53,6 +57,9 @@ function AppRouter() {
 
             {/* ADMIN HESAP AYARLARI */}
             <Route path="/admin/hesap" element={<AccountSettings />} />
+
+            {/* ADMIN SITE AYARLARI */}
+            <Route path="/admin/site-ayarlari" element={<SiteSettings />} />
           </Route>
         </Route>
       </Routes>

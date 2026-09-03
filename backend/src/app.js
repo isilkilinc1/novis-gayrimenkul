@@ -12,6 +12,7 @@ const authRoutes = require("./routes/authRoutes");
 const propertyImageRoutes = require("./routes/propertyImageRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const contactRequestRoutes = require("./routes/contactRequestRoutes");
+const siteSettingsRoutes = require("./routes/siteSettingsRoutes");
 
 // =====================================================
 // ERROR MIDDLEWARE
@@ -128,6 +129,8 @@ app.use("/api/customers", customerRoutes);
 // =====================================================
 
 app.use("/api/contact-requests", contactRequestRoutes);
+
+app.use("/api/site-settings", siteSettingsRoutes);
 
 // =====================================================
 // DASHBOARD ROUTES

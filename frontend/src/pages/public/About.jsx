@@ -1,6 +1,23 @@
+import { useEffect, useState } from "react";
 import Container from "../../components/ui/Container";
+import { getSiteSettings } from "../../services/siteSettingsService";
 
 function About() {
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const data = await getSiteSettings();
+        setSettings(data);
+      } catch (error) {
+        console.error("Site ayarları alınamadı:", error);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
   return (
     <section className="py-16 sm:py-20">
       <Container>
@@ -12,26 +29,24 @@ function About() {
             </p>
 
             <h1 className="mt-3 font-display text-4xl sm:text-5xl font-bold text-novis-anthracite">
-              Hakkımızda
+              {settings?.about_title || "Hakkımızda"}
             </h1>
 
             <div className="mt-6 space-y-5 max-w-2xl">
-              <p className="leading-8 text-novis-brown">
-                NOVIS Gayrimenkul; alım, satım, kiralama ve inşaat alanlarında
-                profesyonel hizmet sunan bir gayrimenkul firmasıdır.
-              </p>
+              {(
+                settings?.about_content ||
+                `NOVIS Gayrimenkul; alım, satım, kiralama ve inşaat alanlarında profesyonel hizmet sunan bir gayrimenkul firmasıdır.
 
-              <p className="leading-8 text-novis-brown">
-                Müşterilerimizin ihtiyaçlarını doğru şekilde anlayarak,
-                güvenilir ve şeffaf bir hizmet anlayışıyla kendileri için en
-                uygun gayrimenkul seçeneklerine ulaşmalarına yardımcı oluyoruz.
-              </p>
+Müşterilerimizin ihtiyaçlarını doğru şekilde anlayarak, güvenilir ve şeffaf bir hizmet anlayışıyla kendileri için en uygun gayrimenkul seçeneklerine ulaşmalarına yardımcı oluyoruz.
 
-              <p className="leading-8 text-novis-brown">
-                Amacımız yalnızca bir gayrimenkul işlemi gerçekleştirmek değil,
-                müşterilerimiz için güvene dayalı ve uzun süreli ilişkiler
-                kurmaktır.
-              </p>
+Amacımız yalnızca bir gayrimenkul işlemi gerçekleştirmek değil, müşterilerimiz için güvene dayalı ve uzun süreli ilişkiler kurmaktır.`
+              )
+                .split(/\n\s*\n/)
+                .map((paragraph, index) => (
+                  <p key={index} className="leading-8 text-novis-brown">
+                    {paragraph}
+                  </p>
+                ))}
             </div>
           </div>
 

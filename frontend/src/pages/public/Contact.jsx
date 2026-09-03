@@ -1,7 +1,24 @@
+import { useEffect, useState } from "react";
 import Container from "../../components/ui/Container";
 import ContactForm from "../../components/ContactForm";
+import { getSiteSettings } from "../../services/siteSettingsService";
 
 function Contact() {
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const data = await getSiteSettings();
+        setSettings(data);
+      } catch (error) {
+        console.error("Site ayarları alınamadı:", error);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
   return (
     <section className="py-12 sm:py-20">
       <Container>
@@ -22,19 +39,21 @@ function Contact() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
             {/* Telefon */}
             <a
-              href="tel:+905357665858"
+              href={`tel:${(settings?.phone || "0535 766 58 58").replace(/\s/g, "")}`}
               className="bg-white p-6 rounded-2xl border border-novis-bronze/20 text-center shadow-xs transition hover:shadow-md hover:border-novis-bronze/40"
             >
               <div className="text-3xl mb-3">📞</div>
 
               <h3 className="font-bold text-novis-anthracite mb-1">Telefon</h3>
 
-              <p className="text-sm text-novis-brown">0535 766 58 58</p>
+              <p className="text-sm text-novis-brown">
+                {settings?.phone || "0535 766 58 58"}
+              </p>
             </a>
 
             {/* E-posta */}
             <a
-              href="mailto:mehmetdmn_@hotmail.com"
+              href={`mailto:${settings?.email || "mehmetdmn_@hotmail.com"}`}
               className="bg-white p-6 rounded-2xl border border-novis-bronze/20 text-center shadow-xs transition hover:shadow-md hover:border-novis-bronze/40"
             >
               <div className="text-3xl mb-3">✉️</div>
@@ -42,7 +61,7 @@ function Contact() {
               <h3 className="font-bold text-novis-anthracite mb-1">E-posta</h3>
 
               <p className="text-sm text-novis-brown break-all">
-                mehmetdmn_@hotmail.com
+                {settings?.email || "mehmetdmn_@hotmail.com"}
               </p>
             </a>
           </div>

@@ -315,26 +315,18 @@ function CreateProperty() {
                   value={formData.square_meters}
                   onChange={handleChange}
                 />
+
                 {formData.property_type === "HOUSE" && (
-                  <div>
-                    <label className="block text-sm font-medium text-novis-anthracite mb-2">
-                      Oda Sayısı
-                    </label>
-                    <select
-                      name="rooms"
-                      value={formData.rooms}
-                      onChange={handleChange}
-                      className="w-full rounded-xl border border-novis-bronze/30 bg-white px-4 py-3 text-novis-anthracite focus:border-novis-bronze focus:outline-none focus:ring-1 focus:ring-novis-bronze transition text-sm"
-                    >
-                      <option value="1+0">1+0</option>
-                      <option value="1+1">1+1</option>
-                      <option value="2+1">2+1</option>
-                      <option value="3+1">3+1</option>
-                      <option value="4+1">4+1</option>
-                      <option value="5+1">5+1</option>
-                    </select>
-                  </div>
+                  <Input
+                    label="Oda Sayısı"
+                    name="rooms"
+                    type="text"
+                    placeholder="Örn. 3+1"
+                    value={formData.rooms}
+                    onChange={handleChange}
+                  />
                 )}
+
                 <Input
                   label="Bulunduğu Kat"
                   name="floor"

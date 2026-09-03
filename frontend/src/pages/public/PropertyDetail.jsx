@@ -4,6 +4,7 @@ import {
   getPropertyById,
   getPropertyImages,
 } from "../../services/propertyService";
+import { getSiteSettings } from "../../services/siteSettingsService";
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
@@ -15,6 +16,7 @@ function PropertyDetail() {
 
   const [property, setProperty] = useState(null);
   const [images, setImages] = useState([]);
+  const [siteSettings, setSiteSettings] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -41,6 +43,19 @@ function PropertyDetail() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchPropertyData();
   }, [fetchPropertyData]);
+
+  useEffect(() => {
+    const fetchSiteSettings = async () => {
+      try {
+        const data = await getSiteSettings();
+        setSiteSettings(data);
+      } catch (err) {
+        console.error("Site ayarları yüklenirken hata:", err);
+      }
+    };
+
+    fetchSiteSettings();
+  }, []);
 
   // 1. Yükleniyor Durumu
   if (loading) {
@@ -325,14 +340,14 @@ function PropertyDetail() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <a
-                  href="tel:+905321234567"
+                  href={`tel:${(siteSettings?.phone || "0535 766 58 58").replace(/\s/g, "")}`}
                   className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 px-4 rounded-xl font-semibold transition shadow-xs text-sm"
                 >
                   <span>📞</span> Ara
                 </a>
 
                 <a
-                  href={`https://wa.me/905321234567?text=${encodeURIComponent(
+                  href={`https://wa.me/${(siteSettings?.phone || "0535 766 58 58").replace(/\D/g, "")}?text=${encodeURIComponent(
                     `Merhaba, NOVIS Gayrimenkul sitesindeki "${property.title}" ilanı hakkında bilgi almak istiyorum.`,
                   )}`}
                   target="_blank"
@@ -343,7 +358,7 @@ function PropertyDetail() {
                 </a>
 
                 <a
-                  href={`mailto:info@novisgayrimenkul.com?subject=${encodeURIComponent(
+                  href={`mailto:${siteSettings?.email || "mehmetdmn_@hotmail.com"}?subject=${encodeURIComponent(
                     `${property.title} İlanı Hakkında Bilgi`,
                   )}&body=${encodeURIComponent(
                     `Merhaba,\n\nWeb sitenizdeki "${property.title}" (ID: ${property.id}) ilanı hakkında detaylı bilgi almak istiyorum.\n\nİyi çalışmalar.`,

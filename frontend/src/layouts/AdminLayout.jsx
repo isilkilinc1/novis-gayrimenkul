@@ -42,6 +42,13 @@ function AdminLayout() {
           </Link>
 
           <Link
+            to="/admin/site-ayarlari"
+            className="block rounded-lg px-4 py-3 hover:bg-novis-brown transition"
+          >
+            Site Ayarları
+          </Link>
+
+          <Link
             to="/admin/hesap"
             className="block rounded-lg px-4 py-3 hover:bg-novis-brown transition"
           >

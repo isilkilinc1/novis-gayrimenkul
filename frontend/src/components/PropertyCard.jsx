@@ -3,10 +3,28 @@ import Badge from "./ui/Badge";
 import Button from "./ui/Button";
 
 function PropertyCard({ property }) {
-  // İlanın kapak fotoğrafı varsa onu al, yoksa varsayılan placeholder görseli göster
-  const imageUrl = property.cover_image
-    ? `http://localhost:5000${property.cover_image}`
-    : "/images/property-placeholder.jpg";
+  // İlanın gerçek kapak fotoğrafı varsa onu kullan.
+  // Fotoğraf yoksa gayrimenkul türüne göre özel placeholder göster.
+  let imageUrl;
+
+  if (property.cover_image) {
+    imageUrl = `http://localhost:5000${property.cover_image}`;
+  } else {
+    switch (property.property_type) {
+      case "LAND":
+        imageUrl = "/images/land-placeholder.jpg";
+        break;
+
+      case "COMMERCIAL":
+        imageUrl = "/images/commercial-placeholder.jpg";
+        break;
+
+      case "HOUSE":
+      default:
+        imageUrl = "/images/property-placeholder.jpg";
+        break;
+    }
+  }
 
   return (
     <article className="overflow-hidden rounded-2xl border border-novis-bronze/20 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
@@ -47,23 +65,23 @@ function PropertyCard({ property }) {
           📍 {property.district} / {property.city}
         </p>
 
-        {/* Koşullu Özellik Alanı (Gayrimenkul Türüne Göre) */}
+        {/* Koşullu Özellik Alanı */}
         <div className="mt-4 border-t border-gray-100 pt-4 text-sm text-novis-brown">
           {property.property_type === "LAND" ? (
-            /* Arsa için sadece metrekare */
             <span className="font-semibold">
               {property.square_meters} m² Arsa
             </span>
           ) : (
-            /* Konut ve İşyeri için m², oda ve varsa kat bilgisi */
             <div className="flex gap-3 flex-wrap">
               <span>{property.square_meters} m²</span>
+
               {property.rooms && (
                 <>
                   <span>•</span>
                   <span>{property.rooms}</span>
                 </>
               )}
+
               {property.floor !== null && property.floor !== undefined && (
                 <>
                   <span>•</span>

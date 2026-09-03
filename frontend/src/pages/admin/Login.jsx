@@ -22,7 +22,7 @@ function Login() {
 
       // Başarılı olursa token'ı tarayıcıya kaydediyoruz
       localStorage.setItem("token", data.token);
-
+      localStorage.setItem("user", JSON.stringify(data.user));
       // Admin paneline yönlendiriyoruz
       navigate("/admin");
     } catch (err) {

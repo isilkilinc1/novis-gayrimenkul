@@ -17,103 +17,151 @@ const getAllActiveProperties = async (queryParams = {}) => {
     limit = 12,
   } = queryParams;
 
-  let query = "SELECT * FROM properties WHERE status = 'ACTIVE'";
-  let countQuery = "SELECT COUNT(*) FROM properties WHERE status = 'ACTIVE'";
+  let query = `
+    SELECT 
+      p.*,
+      pi.image_url AS cover_image
+    FROM properties p
+    LEFT JOIN property_images pi
+      ON pi.property_id = p.id
+      AND pi.is_cover = TRUE
+    WHERE p.status = 'ACTIVE'
+  `;
+
+  let countQuery = `
+    SELECT COUNT(*)
+    FROM properties p
+    WHERE p.status = 'ACTIVE'
+  `;
+
   const values = [];
   const countValues = [];
 
-  // 1. Arama (Search) Filtresi (title, description, city, district, neighborhood içinde arar)
+  // 1. Arama
   if (search) {
     const searchTerm = `%${search}%`;
+
     values.push(searchTerm);
     countValues.push(searchTerm);
-    query += ` AND (title ILIKE $${values.length} OR description ILIKE $${values.length} OR city ILIKE $${values.length} OR district ILIKE $${values.length} OR neighborhood ILIKE $${values.length})`;
-    countQuery += ` AND (title ILIKE $${countValues.length} OR description ILIKE $${countValues.length} OR city ILIKE $${countValues.length} OR district ILIKE $${countValues.length} OR neighborhood ILIKE $${countValues.length})`;
+
+    query += `
+      AND (
+        p.title ILIKE $${values.length}
+        OR p.description ILIKE $${values.length}
+        OR p.city ILIKE $${values.length}
+        OR p.district ILIKE $${values.length}
+        OR p.neighborhood ILIKE $${values.length}
+      )
+    `;
+
+    countQuery += `
+      AND (
+        p.title ILIKE $${countValues.length}
+        OR p.description ILIKE $${countValues.length}
+        OR p.city ILIKE $${countValues.length}
+        OR p.district ILIKE $${countValues.length}
+        OR p.neighborhood ILIKE $${countValues.length}
+      )
+    `;
   }
 
-  // 2. Gayrimenkul Türü (HOUSE, LAND, COMMERCIAL)
+  // 2. Gayrimenkul türü
   if (propertyType) {
     values.push(propertyType);
     countValues.push(propertyType);
-    query += ` AND property_type = $${values.length}`;
-    countQuery += ` AND property_type = $${countValues.length}`;
+
+    query += ` AND p.property_type = $${values.length}`;
+    countQuery += ` AND p.property_type = $${countValues.length}`;
   }
 
-  // 3. İlan Türü (SALE, RENT)
+  // 3. İlan türü
   if (listingType) {
     values.push(listingType);
     countValues.push(listingType);
-    query += ` AND listing_type = $${values.length}`;
-    countQuery += ` AND listing_type = $${countValues.length}`;
+
+    query += ` AND p.listing_type = $${values.length}`;
+    countQuery += ` AND p.listing_type = $${countValues.length}`;
   }
 
-  // 4. Minimum Fiyat
+  // 4. Minimum fiyat
   if (minPrice) {
     values.push(minPrice);
     countValues.push(minPrice);
-    query += ` AND price >= $${values.length}`;
-    countQuery += ` AND price >= $${countValues.length}`;
+
+    query += ` AND p.price >= $${values.length}`;
+    countQuery += ` AND p.price >= $${countValues.length}`;
   }
 
-  // 5. Maksimum Fiyat
+  // 5. Maksimum fiyat
   if (maxPrice) {
     values.push(maxPrice);
     countValues.push(maxPrice);
-    query += ` AND price <= $${values.length}`;
-    countQuery += ` AND price <= $${countValues.length}`;
+
+    query += ` AND p.price <= $${values.length}`;
+    countQuery += ` AND p.price <= $${countValues.length}`;
   }
 
   // 6. Minimum m²
   if (minSquareMeters) {
     values.push(minSquareMeters);
     countValues.push(minSquareMeters);
-    query += ` AND square_meters >= $${values.length}`;
-    countQuery += ` AND square_meters >= $${countValues.length}`;
+
+    query += ` AND p.square_meters >= $${values.length}`;
+    countQuery += ` AND p.square_meters >= $${countValues.length}`;
   }
 
   // 7. Maksimum m²
   if (maxSquareMeters) {
     values.push(maxSquareMeters);
     countValues.push(maxSquareMeters);
-    query += ` AND square_meters <= $${values.length}`;
-    countQuery += ` AND square_meters <= $${countValues.length}`;
+
+    query += ` AND p.square_meters <= $${values.length}`;
+    countQuery += ` AND p.square_meters <= $${countValues.length}`;
   }
 
-  // 8. Oda Sayısı (Sadece Konutlar için)
+  // 8. Oda sayısı
   if (rooms) {
     values.push(rooms);
     countValues.push(rooms);
-    query += ` AND rooms = $${values.length}`;
-    countQuery += ` AND rooms = $${countValues.length}`;
+
+    query += ` AND p.rooms = $${values.length}`;
+    countQuery += ` AND p.rooms = $${countValues.length}`;
   }
 
   // 9. Şehir
   if (city) {
     values.push(city);
     countValues.push(city);
-    query += ` AND city = $${values.length}`;
-    countQuery += ` AND city = $${countValues.length}`;
+
+    query += ` AND p.city = $${values.length}`;
+    countQuery += ` AND p.city = $${countValues.length}`;
   }
 
   // 10. İlçe
   if (district) {
     values.push(district);
     countValues.push(district);
-    query += ` AND district = $${values.length}`;
-    countQuery += ` AND district = $${countValues.length}`;
+
+    query += ` AND p.district = $${values.length}`;
+    countQuery += ` AND p.district = $${countValues.length}`;
   }
 
-  // Toplam kayıt sayısını alalım (Pagination hesabı için)
+  // Toplam kayıt
   const countResult = await pool.query(countQuery, countValues);
   const total = parseInt(countResult.rows[0].count, 10);
 
-  // Pagination hesaplamaları (LIMIT ve OFFSET)
+  // Pagination
   const parsedLimit = parseInt(limit, 10) || 12;
   const parsedPage = parseInt(page, 10) || 1;
+
   const offset = (parsedPage - 1) * parsedLimit;
 
-  // Sıralama ve Sayfalama ekleme
-  query += ` ORDER BY created_at DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+  query += `
+    ORDER BY p.created_at DESC
+    LIMIT $${values.length + 1}
+    OFFSET $${values.length + 2}
+  `;
+
   values.push(parsedLimit, offset);
 
   const result = await pool.query(query, values);

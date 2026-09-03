@@ -41,6 +41,13 @@ function AdminLayout() {
             İletişim Talepleri
           </Link>
 
+          <Link
+            to="/admin/hesap"
+            className="block rounded-lg px-4 py-3 hover:bg-novis-brown transition"
+          >
+            Hesap Ayarları
+          </Link>
+
           <div className="pt-6 mt-6 border-t border-gray-800">
             <Link
               to="/"

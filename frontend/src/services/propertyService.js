@@ -109,9 +109,8 @@ export const getPropertyImages = async (propertyId) => {
     `${API_URL}/properties/${propertyId}/images`,
   );
 
-  return response.data;
+  return response.data.data;
 };
-
 // İlan fotoğraflarını yükle
 export const uploadPropertyImages = async (propertyId, formData) => {
   const token = localStorage.getItem("token");

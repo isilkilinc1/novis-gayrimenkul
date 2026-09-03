@@ -17,6 +17,7 @@ import CreateProperty from "../pages/admin/CreateProperty";
 import EditProperty from "../pages/admin/EditProperty";
 import Customers from "../pages/admin/Customers";
 import ContactRequests from "../pages/admin/ContactRequests";
+import AccountSettings from "../pages/admin/AccountSettings";
 
 function AppRouter() {
   return (
@@ -49,6 +50,9 @@ function AppRouter() {
               path="/admin/iletisim-talepleri"
               element={<ContactRequests />}
             />
+
+            {/* ADMIN HESAP AYARLARI */}
+            <Route path="/admin/hesap" element={<AccountSettings />} />
           </Route>
         </Route>
       </Routes>

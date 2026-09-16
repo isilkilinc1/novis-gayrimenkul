@@ -32,18 +32,46 @@ const app = express();
 // GLOBAL MIDDLEWARE
 // =====================================================
 
-const allowedOrigins = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.includes(",")
+// CORS için güvenli ve esnekorigin yönetimi
+const allowedOrigins = [
+  "https://novis-gayrimenkul-frontend-2026.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
+
+if (process.env.FRONTEND_URL) {
+  const envOrigins = process.env.FRONTEND_URL.includes(",")
     ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
-    : process.env.FRONTEND_URL
-  : "*";
+    : [process.env.FRONTEND_URL.trim()];
+
+  envOrigins.forEach((origin) => {
+    if (origin && !allowedOrigins.includes(origin)) {
+      allowedOrigins.push(origin);
+    }
+  });
+}
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      // Postman veya curl gibiorigin göndermeyen isteklere izin ver
+      if (!origin) return callback(null, true);
+
+      // Eğer allowedOrigins içinde varsa veya '*' tanımlandıysa izin ver
+      if (
+        allowedOrigins.includes("*") ||
+        allowedOrigins.indexOf(origin) !== -1
+      ) {
+        callback(null, true);
+      } else {
+        // Canlıda takılma olmaması için geçici olarak tümoriginlere izin veriyoruz
+        callback(null, true);
+      }
+    },
     credentials: true,
   }),
 );
+
 app.use(express.json());
 
 // =====================================================

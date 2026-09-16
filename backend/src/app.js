@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const pool = require("./config/database");
@@ -32,45 +32,73 @@ const app = express();
 // GLOBAL MIDDLEWARE
 // =====================================================
 
-// CORS için güvenli ve esnekorigin yönetimi
-const allowedOrigins = [
-  "https://novis-gayrimenkul-frontend-2026.vercel.app",
-  "http://localhost:5173",
-  "http://localhost:3000",
-];
+// =====================================================
+// CORS CONFIGURATION
+// =====================================================
 
-if (process.env.FRONTEND_URL) {
-  const envOrigins = process.env.FRONTEND_URL.includes(",")
-    ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
-    : [process.env.FRONTEND_URL.trim()];
+const isOriginAllowed = (origin) => {
+  // Allow requests with no origin (curl, mobile apps, server-to-server)
+  if (!origin) return true;
 
-  envOrigins.forEach((origin) => {
-    if (origin && !allowedOrigins.includes(origin)) {
-      allowedOrigins.push(origin);
+  const normalized = origin.replace(/\/$/, "").toLowerCase();
+
+  // 1. FRONTEND_URL environment variable (tekil veya virgülle ayrılmış liste)
+  if (process.env.FRONTEND_URL) {
+    const envOrigins = process.env.FRONTEND_URL.split(",")
+      .map((u) => u.trim().replace(/\/$/, "").toLowerCase())
+      .filter(Boolean);
+
+    if (envOrigins.includes(normalized)) {
+      return true;
     }
-  });
-}
+  }
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Postman veya curl gibiorigin göndermeyen isteklere izin ver
-      if (!origin) return callback(null, true);
+  // 2. Ana canlı frontend domaini
+  if (normalized === "https://novis-gayrimenkul-frontend-2026.vercel.app") {
+    return true;
+  }
 
-      // Eğer allowedOrigins içinde varsa veya '*' tanımlandıysa izin ver
-      if (
-        allowedOrigins.includes("*") ||
-        allowedOrigins.indexOf(origin) !== -1
-      ) {
-        callback(null, true);
-      } else {
-        // Canlıda takılma olmaması için geçici olarak tümoriginlere izin veriyoruz
-        callback(null, true);
-      }
-    },
-    credentials: true,
-  }),
-);
+  // 3. Vercel Preview, Git Branch ve genel Vercel deployment domainleri
+  if (/^https:\/\/[a-z0-9-_.]+\.vercel\.app$/.test(normalized)) {
+    return true;
+  }
+
+  // 4. Localhost geliştirme ortamları
+  if (
+    /^http:\/\/localhost(:\d+)?$/.test(normalized) ||
+    /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(normalized)
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (isOriginAllowed(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS Blocked] Origin: ${origin}`);
+      callback(new Error(`CORS policy blocked origin: ${origin}`));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "Authorization",
+  ],
+  exposedHeaders: ["Content-Range", "X-Content-Range"],
+  optionsSuccessStatus: 204,
+  maxAge: 86400,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(express.json());
 
@@ -84,59 +112,40 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // HEALTH CHECK
 // =====================================================
 
-app.get("/", (req, res) => {
+const healthHandler = (req, res) => {
   res.json({
     success: true,
     message: "NOVIS API çalışıyor.",
   });
-});
+};
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    success: true,
-    message: "NOVIS API çalışıyor.",
-  });
-});
+app.get("/", healthHandler);
+app.get("/api", healthHandler);
+app.get("/api/health", healthHandler);
+app.get("/health", healthHandler);
 
 // =====================================================
-// PROPERTY ROUTES
+// API ROUTES
 // =====================================================
 
+// Standard /api rotaları
 app.use("/api/properties", propertyRoutes);
-
-// =====================================================
-// PROPERTY IMAGE ROUTES
-// =====================================================
-
 app.use("/api/properties/:propertyId/images", propertyImageRoutes);
-
-// =====================================================
-// AUTH ROUTES
-// =====================================================
-
 app.use("/api/auth", authRoutes);
-
-// =====================================================
-// CUSTOMER ROUTES
-// =====================================================
-
 app.use("/api/customers", customerRoutes);
-
 app.use("/api/transactions", transactionRoutes);
-
-// =====================================================
-// CONTACT REQUEST ROUTES
-// =====================================================
-
 app.use("/api/contact-requests", contactRequestRoutes);
-
 app.use("/api/site-settings", siteSettingsRoutes);
-
-// =====================================================
-// DASHBOARD ROUTES
-// =====================================================
-
 app.use("/api/dashboard", dashboardRoutes);
+
+// Serverless / Proxy / Direct prefixsiz rota desteği
+app.use("/properties", propertyRoutes);
+app.use("/auth", authRoutes);
+app.use("/customers", customerRoutes);
+app.use("/transactions", transactionRoutes);
+app.use("/contact-requests", contactRequestRoutes);
+app.use("/site-settings", siteSettingsRoutes);
+app.use("/dashboard", dashboardRoutes);
 
 // =====================================================
 // ERROR HANDLER

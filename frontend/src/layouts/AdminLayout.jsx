@@ -35,6 +35,13 @@ function AdminLayout() {
           </Link>
 
           <Link
+            to="/admin/islem-gecmisi"
+            className="block rounded-lg px-4 py-3 hover:bg-novis-brown transition"
+          >
+            İşlem Geçmişi
+          </Link>
+
+          <Link
             to="/admin/iletisim-talepleri"
             className="block rounded-lg px-4 py-3 hover:bg-novis-brown transition"
           >

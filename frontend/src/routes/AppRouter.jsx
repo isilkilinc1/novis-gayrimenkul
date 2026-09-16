@@ -19,6 +19,7 @@ import Customers from "../pages/admin/Customers";
 import ContactRequests from "../pages/admin/ContactRequests";
 import AccountSettings from "../pages/admin/AccountSettings";
 import SiteSettings from "../pages/admin/SiteSettings";
+import TransactionHistory from "../pages/admin/TransactionHistory";
 
 function AppRouter() {
   return (
@@ -49,6 +50,11 @@ function AppRouter() {
             />
 
             <Route path="/admin/musteriler" element={<Customers />} />
+
+            <Route
+              path="/admin/islem-gecmisi"
+              element={<TransactionHistory />}
+            />
 
             <Route
               path="/admin/iletisim-talepleri"

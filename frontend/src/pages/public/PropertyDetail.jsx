@@ -10,6 +10,7 @@ import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
 import PropertyMap from "../../components/PropertyMap"; // 🗺️ Harita bileşeni
 import ContactForm from "../../components/ContactForm"; // 📩 İletişim Formu bileşeni
+import { getFullImageUrl } from "../../utils/imageUrl";
 
 function PropertyDetail() {
   const { id } = useParams();
@@ -106,7 +107,7 @@ function PropertyDetail() {
   // Aktif gösterilecek ana fotoğraf URL'i (yoksa yedek placeholder)
   const currentImage =
     images.length > 0
-      ? `http://localhost:5000${images[activeImageIndex].image_url}`
+      ? getFullImageUrl(images[activeImageIndex].image_url)
       : "/images/property-placeholder.jpg";
 
   return (
@@ -181,7 +182,7 @@ function PropertyDetail() {
                     }`}
                   >
                     <img
-                      src={`http://localhost:5000${img.image_url}`}
+                      src={getFullImageUrl(img.image_url)}
                       alt=""
                       className="w-full h-full object-cover"
                     />

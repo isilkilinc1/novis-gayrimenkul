@@ -1,8 +1,9 @@
-const express = require("express");
+﻿const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const pool = require("./config/database");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+
 // =====================================================
 // ROUTES
 // =====================================================
@@ -13,6 +14,7 @@ const propertyImageRoutes = require("./routes/propertyImageRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const contactRequestRoutes = require("./routes/contactRequestRoutes");
 const siteSettingsRoutes = require("./routes/siteSettingsRoutes");
+const transactionRoutes = require("./routes/transactionRoutes");
 
 // =====================================================
 // ERROR MIDDLEWARE
@@ -30,7 +32,18 @@ const app = express();
 // GLOBAL MIDDLEWARE
 // =====================================================
 
-app.use(cors());
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.includes(",")
+    ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
+    : process.env.FRONTEND_URL
+  : "*";
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 // =====================================================
@@ -43,61 +56,18 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // HEALTH CHECK
 // =====================================================
 
-app.get("/api/health", (req, res) => {
+app.get("/", (req, res) => {
   res.json({
     success: true,
     message: "NOVIS API çalışıyor.",
   });
 });
 
-// =====================================================
-// DATABASE TEST
-// =====================================================
-
-app.get("/api/test-db", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT NOW() AS current_time");
-
-    res.json({
-      success: true,
-      database: "PostgreSQL",
-      time: result.rows[0].current_time,
-    });
-  } catch (error) {
-    console.error("Database test hatası:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Database bağlantısı başarısız.",
-    });
-  }
-});
-
-// =====================================================
-// TABLES TEST
-// =====================================================
-
-app.get("/api/test-tables", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public'
-      ORDER BY table_name;
-    `);
-
-    res.json({
-      success: true,
-      tables: result.rows,
-    });
-  } catch (error) {
-    console.error("Tablo test hatası:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Tablolar alınamadı.",
-    });
-  }
+app.get("/api/health", (req, res) => {
+  res.json({
+    success: true,
+    message: "NOVIS API çalışıyor.",
+  });
 });
 
 // =====================================================
@@ -123,6 +93,8 @@ app.use("/api/auth", authRoutes);
 // =====================================================
 
 app.use("/api/customers", customerRoutes);
+
+app.use("/api/transactions", transactionRoutes);
 
 // =====================================================
 // CONTACT REQUEST ROUTES

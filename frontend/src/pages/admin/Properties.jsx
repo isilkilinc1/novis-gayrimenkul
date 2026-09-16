@@ -5,11 +5,11 @@ import {
   deleteProperty,
   updatePropertyStatus,
 } from "../../services/propertyService";
+import { getCustomers } from "../../services/customerService"; // Müşteri seçimi için
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
 
-// Status etiketleri ve renkleri (Badge variant) için yardımcı fonksiyonlar
 const getPropertyStatusLabel = (status) => {
   const labels = {
     ACTIVE: "Aktif",
@@ -33,37 +33,83 @@ const getPropertyStatusVariant = (status) => {
 function Properties() {
   const navigate = useNavigate();
   const [properties, setProperties] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Sayfa ilk açıldığında tüm ilanları admin yetkisiyle çekiyoruz
+  // Filtreleme ve Sıralama State'leri
+  const [listingFilter, setListingFilter] = useState("ALL"); // ALL, SALE, RENT
+  const [typeFilter, setTypeFilter] = useState("ALL"); // ALL, HOUSE, LAND, COMMERCIAL
+  const [sortBy, setSortBy] = useState("date-desc"); // date-desc, date-asc, title-asc, price-asc, price-desc
+
+  // Satış / Kiralama modal state'i
+  const [selectedPropForTransaction, setSelectedPropForTransaction] =
+    useState(null);
+  const [pendingStatus, setPendingStatus] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [transactionNotes, setTransactionNotes] = useState("");
+
   useEffect(() => {
-    const fetchProperties = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getAdminProperties();
-        setProperties(data);
+        const [propData, custData] = await Promise.all([
+          getAdminProperties(),
+          getCustomers().catch(() => []),
+        ]);
+        setProperties(propData);
+        setCustomers(custData);
         setError(null);
       } catch (err) {
-        console.error("İlanlar yüklenirken hata:", err);
-        setError("İlanlar yüklenirken bir hata oluştu.");
+        console.error("Veriler yüklenirken hata:", err);
+        setError("Veriler yüklenirken bir hata oluştu.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProperties();
+    fetchData();
   }, []);
 
-  // Durum değiştirme fonksiyonu
-  const handleStatusChange = async (id, newStatus) => {
+  // Durum değiştirme tetikleyicisi
+  const handleStatusDropdownChange = (property, newStatus) => {
+    if (["SOLD", "RENTED"].includes(newStatus)) {
+      // Müşteri seçimi gerektirdiği için modal açıyoruz
+      setSelectedPropForTransaction(property);
+      setPendingStatus(newStatus);
+      setSelectedCustomerId("");
+      setTransactionNotes("");
+    } else {
+      executeStatusChange(property.id, newStatus, null, null);
+    }
+  };
+
+  const executeStatusChange = async (
+    propertyId,
+    status,
+    customerId,
+    notes,
+    finalPrice = null,
+    transactionDate = null,
+  ) => {
     try {
-      const response = await updatePropertyStatus(id, newStatus);
-      // Listeyi güncelliyoruz ki sayfa yenilenmeden ekranda yansısın
+      const payload = {
+        customerId,
+        notes,
+        finalPrice,
+        transactionDate,
+      };
+      const response = await updatePropertyStatus(propertyId, status, payload);
       setProperties(
         properties.map((prop) =>
-          prop.id === id ? { ...prop, status: response.property.status } : prop,
+          prop.id === propertyId
+            ? {
+                ...prop,
+                status: response.property ? response.property.status : status,
+              }
+            : prop,
         ),
       );
+      setSelectedPropForTransaction(null);
     } catch (err) {
       console.error("Durum güncelleme hatası:", err);
       alert("İlan durumu güncellenirken bir hata oluştu.");
@@ -87,6 +133,34 @@ function Properties() {
     }
   };
 
+  // --- FİLTRELEME VE SIRALAMA MANTIĞI ---
+  const filteredProperties = properties
+    .filter((prop) => {
+      if (listingFilter !== "ALL" && prop.listing_type !== listingFilter)
+        return false;
+      if (typeFilter !== "ALL" && prop.property_type !== typeFilter)
+        return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "date-desc") {
+        return new Date(b.created_at) - new Date(a.created_at);
+      }
+      if (sortBy === "date-asc") {
+        return new Date(a.created_at) - new Date(b.created_at);
+      }
+      if (sortBy === "title-asc") {
+        return a.title.localeCompare(b.title, "tr");
+      }
+      if (sortBy === "price-asc") {
+        return Number(a.price) - Number(b.price);
+      }
+      if (sortBy === "price-desc") {
+        return Number(b.price) - Number(a.price);
+      }
+      return 0;
+    });
+
   return (
     <Container>
       {/* Üst Başlık ve Buton */}
@@ -96,7 +170,7 @@ function Properties() {
             İlan Yönetimi
           </h1>
           <p className="mt-2 text-novis-brown">
-            NOVIS Gayrimenkul ilanlarını görüntüleyin ve yönetin.
+            NOVIS Gayrimenkul ilanlarını görüntüleyin, filtreleyin ve yönetin.
           </p>
         </div>
         <div>
@@ -109,19 +183,73 @@ function Properties() {
         </div>
       </div>
 
-      {/* İlan Sayısı */}
+      {/* FİLTRELEME VE SIRALAMA ÇUBUĞU */}
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white p-4 rounded-2xl border border-novis-bronze/20 shadow-sm">
+        {/* 1. İlan Tipi Filtresi (Hepsi / Satılık / Kiralık) */}
+        <div>
+          <label className="block text-xs font-semibold text-novis-brown uppercase mb-1">
+            İlan Tipi
+          </label>
+          <select
+            value={listingFilter}
+            onChange={(e) => setListingFilter(e.target.value)}
+            className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2 bg-white text-novis-anthracite focus:outline-none focus:ring-1 focus:ring-novis-bronze"
+          >
+            <option value="ALL">Tümü (Satılık & Kiralık)</option>
+            <option value="SALE">Satılık</option>
+            <option value="RENT">Kiralık</option>
+          </select>
+        </div>
+
+        {/* 2. Kategori Filtresi (Hepsi / Konut / Arsa / İşyeri) */}
+        <div>
+          <label className="block text-xs font-semibold text-novis-brown uppercase mb-1">
+            Kategori
+          </label>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2 bg-white text-novis-anthracite focus:outline-none focus:ring-1 focus:ring-novis-bronze"
+          >
+            <option value="ALL">Tüm Kategoriler</option>
+            <option value="HOUSE">Konut</option>
+            <option value="LAND">Arsa</option>
+            <option value="COMMERCIAL">İşyeri</option>
+          </select>
+        </div>
+
+        {/* 3. Sıralama (Tarih, Alfabetik, Fiyat) */}
+        <div>
+          <label className="block text-xs font-semibold text-novis-brown uppercase mb-1">
+            Sıralama
+          </label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2 bg-white text-novis-anthracite focus:outline-none focus:ring-1 focus:ring-novis-bronze"
+          >
+            <option value="date-desc">Yeniden Eskiye (Tarih)</option>
+            <option value="date-asc">Eskiden Yeniye (Tarih)</option>
+            <option value="title-asc">Alfabetik (A-Z)</option>
+            <option value="price-asc">Fiyata Göre (Artan)</option>
+            <option value="price-desc">Fiyata Göre (Azalan)</option>
+          </select>
+        </div>
+      </div>
+
+      {/* İlan Sayısı Bilgisi */}
       {!loading && !error && (
         <div className="mt-6 text-sm font-medium text-novis-brown">
-          Toplam{" "}
+          Filtrelenen sonuç:{" "}
           <span className="font-bold text-novis-anthracite">
-            {properties.length}
+            {filteredProperties.length}
           </span>{" "}
-          ilan bulundu
+          ilan gösteriliyor
         </div>
       )}
 
-      {/* İçerik Alanı (Loading, Error, Empty veya Tablo) */}
-      <div className="mt-6">
+      {/* Tablo Alanı */}
+      <div className="mt-4">
         {loading ? (
           <div className="rounded-2xl bg-white p-12 text-center border border-novis-bronze/20 text-novis-brown">
             İlanlar yükleniyor...
@@ -130,9 +258,9 @@ function Properties() {
           <div className="rounded-2xl bg-white p-12 text-center border border-red-200 text-red-600">
             <p>{error}</p>
           </div>
-        ) : properties.length === 0 ? (
+        ) : filteredProperties.length === 0 ? (
           <div className="rounded-2xl bg-white p-12 text-center border border-novis-bronze/20 text-novis-brown">
-            Henüz ilan bulunmuyor.
+            Kriterlere uygun ilan bulunamadı.
           </div>
         ) : (
           <div className="rounded-2xl bg-white shadow-sm border border-novis-bronze/20 overflow-hidden">
@@ -151,12 +279,11 @@ function Properties() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {properties.map((property) => (
+                  {filteredProperties.map((property) => (
                     <tr
                       key={property.id}
                       className="hover:bg-gray-50/50 transition"
                     >
-                      {/* Dinamik Emojili Fotoğraf Alanı */}
                       <td className="py-4 px-6">
                         <div className="h-12 w-16 rounded-lg bg-novis-cream flex items-center justify-center text-lg border border-novis-bronze/20">
                           {property.property_type === "LAND"
@@ -166,13 +293,9 @@ function Properties() {
                               : "🏠"}
                         </div>
                       </td>
-
-                      {/* Başlık */}
                       <td className="py-4 px-6 font-medium text-novis-anthracite max-w-xs truncate">
                         {property.title}
                       </td>
-
-                      {/* Tür (Satılık / Kiralık) */}
                       <td className="py-4 px-6">
                         <span className="font-medium text-novis-anthracite">
                           {property.listing_type === "SALE"
@@ -180,8 +303,6 @@ function Properties() {
                             : "Kiralık"}
                         </span>
                       </td>
-
-                      {/* Kategori (Konut / Arsa / İşyeri) */}
                       <td className="py-4 px-6">
                         <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
                           {property.property_type === "HOUSE" && "Konut"}
@@ -189,20 +310,14 @@ function Properties() {
                           {property.property_type === "COMMERCIAL" && "İşyeri"}
                         </span>
                       </td>
-
-                      {/* Fiyat */}
                       <td className="py-4 px-6 font-semibold text-novis-anthracite">
                         {Number(property.price).toLocaleString("tr-TR")} TL
                       </td>
-
-                      {/* Konum */}
                       <td className="py-4 px-6">
                         <div className="text-novis-anthracite font-medium">
                           {property.city} / {property.district}
                         </div>
                       </td>
-
-                      {/* Durum */}
                       <td className="py-4 px-6">
                         <div className="flex flex-col gap-1.5 items-start">
                           <Badge
@@ -213,7 +328,10 @@ function Properties() {
                           <select
                             value={property.status}
                             onChange={(e) =>
-                              handleStatusChange(property.id, e.target.value)
+                              handleStatusDropdownChange(
+                                property,
+                                e.target.value,
+                              )
                             }
                             className="text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white text-novis-anthracite focus:outline-none focus:ring-1 focus:ring-novis-bronze"
                           >
@@ -224,8 +342,6 @@ function Properties() {
                           </select>
                         </div>
                       </td>
-
-                      {/* İşlemler */}
                       <td className="py-4 px-6 text-right space-x-2">
                         <button
                           onClick={() =>
@@ -235,7 +351,6 @@ function Properties() {
                         >
                           Düzenle
                         </button>
-
                         <button
                           onClick={() =>
                             handleDelete(property.id, property.title)
@@ -253,6 +368,78 @@ function Properties() {
           </div>
         )}
       </div>
+
+      {/* SATIŞ / KİRALAMA LOG MODALI */}
+      {selectedPropForTransaction && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-novis-bronze/20">
+            <h3 className="text-xl font-bold text-novis-anthracite">
+              {pendingStatus === "SOLD"
+                ? "Mülk Satış Detayları"
+                : "Mülk Kiralama Detayları"}
+            </h3>
+            <p className="text-xs text-novis-brown mt-1">
+              Bu mülkü hangi müşteriye sattığınızı/kiraladığınızı ve tarihi
+              kaydetmek için lütfen müşteri seçin.
+            </p>
+
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-novis-anthracite uppercase mb-1">
+                  Müşteri Seçin
+                </label>
+                <select
+                  value={selectedCustomerId}
+                  onChange={(e) => setSelectedCustomerId(e.target.value)}
+                  className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2.5 bg-white text-novis-anthracite focus:outline-none focus:ring-1 focus:ring-novis-bronze"
+                >
+                  <option value="">-- Müşteri Seçin --</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name || c.full_name || "İsimsiz müşteri"} ({c.phone || c.email || "İletişim bilgisi yok"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-novis-anthracite uppercase mb-1">
+                  İşlem Notları (Opsiyonel)
+                </label>
+                <textarea
+                  value={transactionNotes}
+                  onChange={(e) => setTransactionNotes(e.target.value)}
+                  placeholder="Örn: Kapora alındı, tapu devri tamamlandı..."
+                  className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2 bg-white text-novis-anthracite focus:outline-none focus:ring-1 focus:ring-novis-bronze"
+                  rows="3"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <Button
+                  variant="secondary"
+                  onClick={() => setSelectedPropForTransaction(null)}
+                >
+                  İptal
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() =>
+                    executeStatusChange(
+                      selectedPropForTransaction.id,
+                      pendingStatus,
+                      selectedCustomerId || null,
+                      transactionNotes,
+                    )
+                  }
+                >
+                  Kaydet ve Durumu Güncelle
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Container>
   );
 }

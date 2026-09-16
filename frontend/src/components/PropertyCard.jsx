@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import Badge from "./ui/Badge";
 import Button from "./ui/Button";
+import { getFullImageUrl } from "../utils/imageUrl";
 
 function PropertyCard({ property }) {
   // İlanın gerçek kapak fotoğrafı varsa onu kullan.
@@ -8,7 +9,7 @@ function PropertyCard({ property }) {
   let imageUrl;
 
   if (property.cover_image) {
-    imageUrl = `http://localhost:5000${property.cover_image}`;
+    imageUrl = getFullImageUrl(property.cover_image);
   } else {
     switch (property.property_type) {
       case "LAND":

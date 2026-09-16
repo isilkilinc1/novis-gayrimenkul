@@ -26,3 +26,13 @@ textarea,
 select {
   font: inherit;
 }
+
+@media print {
+  body { background: #fff; }
+  aside, .no-print, button, .fixed { display: none !important; }
+  main { padding: 0 !important; }
+  .print-area { max-width: none !important; padding: 0 !important; }
+  .print-only { display: inline !important; }
+  table { min-width: 0 !important; font-size: 10px; }
+  th, td { padding: 6px !important; }
+}

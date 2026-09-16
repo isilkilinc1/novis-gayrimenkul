@@ -397,20 +397,58 @@ const updateProperty = async (id, propertyData) => {
   return result.rows[0];
 };
 
-// 5. Sadece ilanın durumunu (status) güncelleyen fonksiyon
-const updatePropertyStatus = async (id, status) => {
-  const result = await pool.query(
-    `
-    UPDATE properties
-    SET status = $1,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE id = $2
-    RETURNING *
-    `,
-    [status, id],
-  );
+//5. İlan durumunu ve satış/kiralama logunu güncelleyen fonksiyon
+const updatePropertyStatusWithTransaction = async (
+  id,
+  status,
+  customerId,
+  finalPrice,
+  notes,
+  transactionDate,
+) => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
 
-  return result.rows[0];
+    // a. İlanın durumunu güncelle
+    const updateRes = await client.query(
+      `UPDATE properties SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`,
+      [status, id],
+    );
+    const updatedProperty = updateRes.rows[0];
+
+    // b. Eğer durum SOLD veya RENTED olduysa işlem loguna kaydet
+    if (["SOLD", "RENTED"].includes(status) && customerId) {
+      await client.query(
+        `INSERT INTO property_transactions
+   (
+     property_id,
+     customer_id,
+     transaction_type,
+     transaction_date,
+     final_price,
+     notes
+   )
+   VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          id,
+          customerId,
+          status,
+          transactionDate || new Date(),
+          finalPrice || updatedProperty.price,
+          notes || null,
+        ],
+      );
+    }
+
+    await client.query("COMMIT");
+    return updatedProperty;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 // 6. İlanı sil (DELETE)
@@ -433,6 +471,6 @@ module.exports = {
   getPropertyById,
   createProperty,
   updateProperty,
-  updatePropertyStatus,
+  updatePropertyStatus: updatePropertyStatusWithTransaction,
   deleteProperty,
 };

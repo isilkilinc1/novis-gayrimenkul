@@ -71,7 +71,8 @@ const updateProperty = async (req, res, next) => {
 const updatePropertyStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+
+    const { status, customerId, finalPrice, notes, transactionDate } = req.body;
 
     const allowedStatuses = ["ACTIVE", "INACTIVE", "SOLD", "RENTED"];
 
@@ -81,7 +82,21 @@ const updatePropertyStatus = async (req, res, next) => {
       });
     }
 
-    const property = await propertyService.updatePropertyStatus(id, status);
+    // Satış veya kiralama işleminde müşteri zorunlu
+    if (["SOLD", "RENTED"].includes(status) && !customerId) {
+      return res.status(400).json({
+        message: "Satış veya kiralama işlemi için müşteri seçilmelidir.",
+      });
+    }
+
+    const property = await propertyService.updatePropertyStatus(
+      id,
+      status,
+      customerId,
+      finalPrice,
+      notes,
+      transactionDate,
+    );
 
     if (!property) {
       return res.status(404).json({

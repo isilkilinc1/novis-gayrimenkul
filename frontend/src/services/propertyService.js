@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 // ======================================================
 // PUBLIC - İLANLAR
@@ -69,13 +69,26 @@ export const updateProperty = async (id, propertyData) => {
   return response.data;
 };
 
-// İlan durumunu güncelle
-export const updatePropertyStatus = async (id, status) => {
+// İlan durumunu güncelle. Satış/kiralama kayıtları için ek işlem verilerini de iletir.
+export const updatePropertyStatus = async (id, status, payload = {}) => {
   const token = localStorage.getItem("token");
+
+  const {
+    customerId = null,
+    notes = null,
+    finalPrice = null,
+    transactionDate = null,
+  } = payload;
 
   const response = await axios.patch(
     `${API_URL}/properties/${id}/status`,
-    { status },
+    {
+      status,
+      customerId,
+      notes,
+      finalPrice,
+      transactionDate,
+    },
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -111,6 +124,7 @@ export const getPropertyImages = async (propertyId) => {
 
   return response.data.data;
 };
+
 // İlan fotoğraflarını yükle
 export const uploadPropertyImages = async (propertyId, formData) => {
   const token = localStorage.getItem("token");
@@ -121,7 +135,6 @@ export const uploadPropertyImages = async (propertyId, formData) => {
     {
       headers: {
         Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
       },
     },
   );

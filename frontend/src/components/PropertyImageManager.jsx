@@ -6,6 +6,7 @@ import {
   deletePropertyImage,
   setCoverImage,
 } from "../services/propertyService";
+import { getFullImageUrl } from "../utils/imageUrl";
 
 export default function PropertyImageManager({ propertyId }) {
   const [images, setImages] = useState([]);
@@ -216,7 +217,7 @@ export default function PropertyImageManager({ propertyId }) {
               {/* FOTOĞRAF */}
               <div className="relative">
                 <img
-                  src={`http://localhost:5000${img.image_url}`}
+                  src={getFullImageUrl(img.image_url)}
                   alt="İlan Görseli"
                   className="w-full h-32 object-cover"
                 />

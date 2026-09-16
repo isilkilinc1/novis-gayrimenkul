@@ -1,0 +1,21 @@
+const transactionService = require("../services/transactionService");
+const allowedTransactionTypes = ["SOLD", "RENTED"];
+const allowedPropertyTypes = ["HOUSE", "COMMERCIAL", "LAND"];
+const allowedSorts = ["date_desc", "date_asc", "customer_asc", "customer_desc", "property_asc", "property_desc"];
+const isPositiveInteger = (value) => Number.isInteger(Number(value)) && Number(value) > 0;
+const isValidDate = (value) => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
+const validateFilters = (query, res) => {
+  if (query.transactionType && !allowedTransactionTypes.includes(query.transactionType)) return res.status(400).json({ message: "Geçersiz işlem filtresi." }), false;
+  if (query.propertyType && !allowedPropertyTypes.includes(query.propertyType)) return res.status(400).json({ message: "Geçersiz taşınmaz türü filtresi." }), false;
+  if (query.sort && !allowedSorts.includes(query.sort)) return res.status(400).json({ message: "Geçersiz sıralama seçeneği." }), false;
+  if (query.fromDate && !isValidDate(query.fromDate)) return res.status(400).json({ message: "Geçersiz başlangıç tarihi." }), false;
+  if (query.toDate && !isValidDate(query.toDate)) return res.status(400).json({ message: "Geçersiz bitiş tarihi." }), false;
+  if (query.fromDate && query.toDate && query.fromDate > query.toDate) return res.status(400).json({ message: "Başlangıç tarihi bitiş tarihinden sonra olamaz." }), false;
+  return true;
+};
+const getTransactions = async (req, res, next) => { try { if (!validateFilters(req.query, res)) return; res.json(await transactionService.getTransactions(req.query)); } catch (error) { next(error); } };
+const exportTransactions = async (req, res, next) => { try { if (!validateFilters(req.query, res)) return; res.json({ data: await transactionService.getExportTransactions(req.query) }); } catch (error) { next(error); } };
+const getCustomerHistory = async (req, res, next) => { try { if (!isPositiveInteger(req.params.customerId)) return res.status(400).json({ message: "Geçersiz müşteri kimliği." }); const result = await transactionService.getCustomerHistory(req.params.customerId); if (!result) return res.status(404).json({ message: "Müşteri artık mevcut değil." }); res.json(result); } catch (error) { next(error); } };
+const updateTransaction = async (req, res, next) => { try { const { transactionDate, transactionType, finalPrice, notes, customerId } = req.body; if (!isPositiveInteger(req.params.id)) return res.status(400).json({ message: "Geçersiz işlem kimliği." }); if (!isValidDate(transactionDate)) return res.status(400).json({ message: "Geçersiz işlem tarihi." }); if (!allowedTransactionTypes.includes(transactionType)) return res.status(400).json({ message: "Geçersiz işlem türü." }); if (!isPositiveInteger(customerId) || !(await transactionService.customerExists(customerId))) return res.status(400).json({ message: "Geçerli bir müşteri seçilmelidir." }); if (finalPrice === "" || finalPrice === null || !Number.isFinite(Number(finalPrice)) || Number(finalPrice) < 0) return res.status(400).json({ message: "Geçersiz gerçekleşen fiyat." }); if (notes !== undefined && notes !== null && typeof notes !== "string") return res.status(400).json({ message: "Geçersiz işlem notu." }); if (!(await transactionService.findTransaction(req.params.id))) return res.status(404).json({ message: "İşlem kaydı bulunamadı." }); const transaction = await transactionService.updateTransaction(req.params.id, { transactionDate, transactionType, finalPrice: Number(finalPrice), notes, customerId }); res.json({ message: "İşlem kaydı güncellendi.", transaction }); } catch (error) { next(error); } };
+const deleteTransaction = async (req, res, next) => { try { if (!isPositiveInteger(req.params.id)) return res.status(400).json({ message: "Geçersiz işlem kimliği." }); if (!(await transactionService.findTransaction(req.params.id))) return res.status(404).json({ message: "İşlem kaydı bulunamadı." }); await transactionService.deleteTransaction(req.params.id); res.json({ message: "İşlem kaydı silindi." }); } catch (error) { next(error); } };
+module.exports = { getTransactions, exportTransactions, getCustomerHistory, updateTransaction, deleteTransaction };

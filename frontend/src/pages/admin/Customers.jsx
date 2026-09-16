@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import {
   getCustomers,
@@ -11,6 +12,7 @@ import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 
 export default function Customers() {
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -517,6 +519,17 @@ export default function Customers() {
                       </td>
 
                       <td className="p-4 text-right whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate("/admin/islem-gecmisi", {
+                              state: { customerId: customer.id },
+                            })
+                          }
+                          className="text-novis-bronze hover:text-novis-brown text-xs font-semibold px-2.5 py-1.5 bg-novis-cream hover:bg-novis-gold/20 rounded-lg transition mr-2"
+                        >
+                          İşlem Geçmişi
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleOpenEdit(customer)}

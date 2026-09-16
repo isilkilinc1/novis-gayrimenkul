@@ -18,14 +18,34 @@ const getCloudinaryPublicIdFromUrl = (url) => {
   }
 };
 
+if (
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET
+) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+}
+
 class PropertyImageController {
   // Fotoğrafları listele
   static async getImages(req, res, next) {
     try {
       const { propertyId } = req.params;
+      const numericPropertyId = parseInt(propertyId, 10);
+
+      if (!numericPropertyId || isNaN(numericPropertyId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Geçersiz ilan ID'si.",
+        });
+      }
 
       const images =
-        await PropertyImageService.getImagesByPropertyId(propertyId);
+        await PropertyImageService.getImagesByPropertyId(numericPropertyId);
 
       res.json({
         success: true,
@@ -40,6 +60,14 @@ class PropertyImageController {
   static async uploadImages(req, res, next) {
     try {
       const { propertyId } = req.params;
+      const numericPropertyId = parseInt(propertyId, 10);
+
+      if (!numericPropertyId || isNaN(numericPropertyId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Geçersiz ilan ID'si.",
+        });
+      }
 
       if (!req.files || req.files.length === 0) {
         return res.status(400).json({
@@ -49,7 +77,7 @@ class PropertyImageController {
       }
 
       const existingImages =
-        await PropertyImageService.getImagesByPropertyId(propertyId);
+        await PropertyImageService.getImagesByPropertyId(numericPropertyId);
 
       const isFirstImage = existingImages.length === 0;
       const savedImages = [];
@@ -60,7 +88,7 @@ class PropertyImageController {
         // Cloudinary veya Local URL
         const imageUrl = file.path?.startsWith("http")
           ? file.path
-          : `/uploads/properties/${propertyId}/${file.filename}`;
+          : `/uploads/properties/${numericPropertyId}/${file.filename}`;
 
         // Cloudinary public ID
         const cloudinaryPublicId = file.path?.startsWith("http")
@@ -73,7 +101,7 @@ class PropertyImageController {
         const displayOrder = existingImages.length + i + 1;
 
         const newImage = await PropertyImageService.addImage(
-          propertyId,
+          numericPropertyId,
           imageUrl,
           cloudinaryPublicId,
           isCover,
@@ -109,8 +137,16 @@ class PropertyImageController {
   static async deleteImage(req, res, next) {
     try {
       const { imageId } = req.params;
+      const numericImageId = parseInt(imageId, 10);
 
-      const image = await PropertyImageService.getImageById(imageId);
+      if (!numericImageId || isNaN(numericImageId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Geçersiz fotoğraf ID'si.",
+        });
+      }
+
+      const image = await PropertyImageService.getImageById(numericImageId);
 
       if (!image) {
         return res.status(404).json({
@@ -119,12 +155,12 @@ class PropertyImageController {
         });
       }
 
-      // Cloudinary fotoğrafları
+      // Cloudinary fotoğraflarını silmeyi dene
       if (image.cloudinary_public_id) {
         try {
           await cloudinary.uploader.destroy(image.cloudinary_public_id);
         } catch (cloudErr) {
-          console.error("Cloudinary silme hatası:", cloudErr.message);
+          console.warn("Cloudinary public_id silme uyarısı:", cloudErr.message);
         }
       } else if (image.image_url?.includes("cloudinary.com")) {
         const publicId = getCloudinaryPublicIdFromUrl(image.image_url);
@@ -132,21 +168,24 @@ class PropertyImageController {
           try {
             await cloudinary.uploader.destroy(publicId);
           } catch (cloudErr) {
-            console.error("Cloudinary silme hatası:", cloudErr.message);
+            console.warn("Cloudinary URL publicId silme uyarısı:", cloudErr.message);
           }
         }
       }
       // Eski lokal fotoğraflar için geriye dönük destek
       else if (image.image_url?.startsWith("/uploads/")) {
-        const filePath = path.join(__dirname, "../..", image.image_url);
-
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
+        try {
+          const filePath = path.join(__dirname, "../..", image.image_url);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        } catch (fsErr) {
+          console.warn("Lokal dosya silme uyarısı:", fsErr.message);
         }
       }
 
       // Veritabanından sil
-      await PropertyImageService.deleteImage(imageId);
+      await PropertyImageService.deleteImage(numericImageId);
 
       res.json({
         success: true,
@@ -161,10 +200,19 @@ class PropertyImageController {
   static async setCover(req, res, next) {
     try {
       const { propertyId, imageId } = req.params;
+      const numericPropertyId = parseInt(propertyId, 10);
+      const numericImageId = parseInt(imageId, 10);
+
+      if (!numericImageId || isNaN(numericImageId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Geçersiz fotoğraf ID'si.",
+        });
+      }
 
       const updated = await PropertyImageService.setCoverImage(
-        propertyId,
-        imageId,
+        numericPropertyId,
+        numericImageId,
       );
 
       if (!updated) {

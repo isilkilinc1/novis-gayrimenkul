@@ -116,7 +116,7 @@ export default function PropertyImageManager({ propertyId }) {
     try {
       setError("");
 
-      await deletePropertyImage(imageId);
+      await deletePropertyImage(propertyId, imageId);
 
       // State'i fonksiyonel olarak güncelle
       setImages((currentImages) =>

@@ -146,14 +146,19 @@ export const uploadPropertyImages = async (propertyId, formData) => {
 export const deletePropertyImage = async (propertyId, imageId) => {
   const token = localStorage.getItem("token");
 
-  const response = await axios.delete(
-    `${API_URL}/properties/${propertyId}/images/${imageId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  // Eğer tek parametre olarak imageId verildiyse veya hem propertyId hem imageId verildiyse
+  const actualImageId = imageId !== undefined ? imageId : propertyId;
+  const actualPropertyId = imageId !== undefined ? propertyId : null;
+
+  const url = actualPropertyId
+    ? `${API_URL}/properties/${actualPropertyId}/images/${actualImageId}`
+    : `${API_URL}/properties/images/${actualImageId}`;
+
+  const response = await axios.delete(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
     },
-  );
+  });
 
   return response.data;
 };

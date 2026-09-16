@@ -56,14 +56,56 @@ class PropertyImageService {
   }
 
   static async deleteImage(imageId) {
-    const query = `
-      DELETE FROM property_images
-      WHERE id = $1
-      RETURNING *;
-    `;
+    const client = await pool.connect();
 
-    const result = await pool.query(query, [imageId]);
-    return result.rows[0];
+    try {
+      await client.query("BEGIN");
+
+      const deleteResult = await client.query(
+        `
+        DELETE FROM property_images
+        WHERE id = $1
+        RETURNING *;
+        `,
+        [imageId],
+      );
+
+      const deletedImage = deleteResult.rows[0];
+
+      // Eğer silinen fotoğraf kapak fotoğrafıysa ve ilanın başka fotoğrafları varsa,
+      // ilk sıradaki fotoğrafı otomatik kapak yap
+      if (deletedImage && deletedImage.is_cover) {
+        const remainingImages = await client.query(
+          `
+          SELECT id
+          FROM property_images
+          WHERE property_id = $1
+          ORDER BY display_order ASC, id ASC
+          LIMIT 1;
+          `,
+          [deletedImage.property_id],
+        );
+
+        if (remainingImages.rows.length > 0) {
+          await client.query(
+            `
+            UPDATE property_images
+            SET is_cover = TRUE
+            WHERE id = $1;
+            `,
+            [remainingImages.rows[0].id],
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+      return deletedImage;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   static async setCoverImage(propertyId, imageId) {

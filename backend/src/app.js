@@ -128,8 +128,9 @@ app.get("/health", healthHandler);
 // =====================================================
 
 // Standard /api rotaları
-app.use("/api/properties", propertyRoutes);
 app.use("/api/properties/:propertyId/images", propertyImageRoutes);
+app.use("/api/properties/images", propertyImageRoutes);
+app.use("/api/properties", propertyRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/transactions", transactionRoutes);
@@ -138,6 +139,8 @@ app.use("/api/site-settings", siteSettingsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
 // Serverless / Proxy / Direct prefixsiz rota desteği
+app.use("/properties/:propertyId/images", propertyImageRoutes);
+app.use("/properties/images", propertyImageRoutes);
 app.use("/properties", propertyRoutes);
 app.use("/auth", authRoutes);
 app.use("/customers", customerRoutes);

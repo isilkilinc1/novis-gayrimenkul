@@ -1,7 +1,7 @@
 const express = require("express");
 
 const contactController = require("../controllers/contactRequestController");
-
+const { contactLimiter } = require("../middleware/rateLimiter");
 const { authenticate } = require("../middleware/authMiddleware");
 const { requireAdmin } = require("../middleware/roleMiddleware");
 
@@ -9,11 +9,11 @@ const router = express.Router();
 
 // =====================================================
 // PUBLIC
-// Ziyaretçi iletişim formu gönderir
+// Ziyaretçi iletişim formu gönderir (Spam korumalı)
 // POST /api/contact-requests
 // =====================================================
 
-router.post("/", contactController.createRequest);
+router.post("/", contactLimiter, contactController.createRequest);
 
 // =====================================================
 // ADMIN

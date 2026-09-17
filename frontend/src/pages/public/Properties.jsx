@@ -51,8 +51,6 @@ function Properties() {
           ),
         );
 
-        console.log("Gönderilen Temiz Parametreler:", cleanParams);
-
         const result = await getProperties(cleanParams);
         setProperties(result.data || result);
         if (result.pagination) {

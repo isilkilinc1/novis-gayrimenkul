@@ -1,8 +1,12 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const path = require("path");
-const pool = require("./config/database");
-const dashboardRoutes = require("./routes/dashboardRoutes");
+const validateEnv = require("./config/validateEnv");
+const { apiLimiter } = require("./middleware/rateLimiter");
+
+// Validate environment variables on startup
+validateEnv();
 
 // =====================================================
 // ROUTES
@@ -15,6 +19,7 @@ const customerRoutes = require("./routes/customerRoutes");
 const contactRequestRoutes = require("./routes/contactRequestRoutes");
 const siteSettingsRoutes = require("./routes/siteSettingsRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 // =====================================================
 // ERROR MIDDLEWARE
@@ -23,24 +28,33 @@ const transactionRoutes = require("./routes/transactionRoutes");
 const errorMiddleware = require("./middleware/errorMiddleware");
 
 // =====================================================
-// APP
+// APP & HTTP HARDENING
 // =====================================================
 
 const app = express();
 
-// =====================================================
-// GLOBAL MIDDLEWARE
-// =====================================================
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
+
+// Security Headers (configured to not break Leaflet/Cloudinary/media resources)
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: false,
+  }),
+);
 
 // =====================================================
 // CORS CONFIGURATION
 // =====================================================
 
 const isOriginAllowed = (origin) => {
-  // Allow requests with no origin (curl, mobile apps, server-to-server)
+  // Allow requests with no origin (curl, mobile apps, server-to-server, health checks)
   if (!origin) return true;
 
   const normalized = origin.replace(/\/$/, "").toLowerCase();
+  const isProduction = process.env.NODE_ENV === "production";
 
   // 1. FRONTEND_URL environment variable (tekil veya virgülle ayrılmış liste)
   if (process.env.FRONTEND_URL) {
@@ -53,22 +67,14 @@ const isOriginAllowed = (origin) => {
     }
   }
 
-  // 2. Ana canlı frontend domaini
-  if (normalized === "https://novis-gayrimenkul-frontend-2026.vercel.app") {
-    return true;
-  }
-
-  // 3. Vercel Preview, Git Branch ve genel Vercel deployment domainleri
-  if (/^https:\/\/[a-z0-9-_.]+\.vercel\.app$/.test(normalized)) {
-    return true;
-  }
-
-  // 4. Localhost geliştirme ortamları
-  if (
-    /^http:\/\/localhost(:\d+)?$/.test(normalized) ||
-    /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(normalized)
-  ) {
-    return true;
+  // 2. Development ortamında localhost ve 127.0.0.1 izinleri
+  if (!isProduction) {
+    if (
+      /^http:\/\/localhost(:\d+)?$/.test(normalized) ||
+      /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(normalized)
+    ) {
+      return true;
+    }
   }
 
   return false;
@@ -79,8 +85,10 @@ const corsOptions = {
     if (isOriginAllowed(origin)) {
       callback(null, true);
     } else {
-      console.warn(`[CORS Blocked] Origin: ${origin}`);
-      callback(new Error(`CORS policy blocked origin: ${origin}`));
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(`[CORS Blocked] Origin: ${origin}`);
+      }
+      callback(new Error("CORS policy blocked this origin."));
     }
   },
   credentials: true,
@@ -99,10 +107,24 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.use(express.json());
+// Request Body Limits
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
+
+// Rate Limiting (Public & general API abuse protection)
+app.use("/api", apiLimiter);
+
+// Sensitive API response caching prevention
+app.use("/api", (req, res, next) => {
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, private",
+  );
+  next();
+});
 
 // =====================================================
-// STATIC FILES
+// STATIC FILES (Dev / Local fallback)
 // =====================================================
 
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
@@ -148,6 +170,14 @@ app.use("/transactions", transactionRoutes);
 app.use("/contact-requests", contactRequestRoutes);
 app.use("/site-settings", siteSettingsRoutes);
 app.use("/dashboard", dashboardRoutes);
+
+// Unmatched API Route JSON 404 Handler
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "İstenen API endpoint'i bulunamadı.",
+  });
+});
 
 // =====================================================
 // ERROR HANDLER

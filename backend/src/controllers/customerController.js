@@ -1,64 +1,100 @@
 const customerService = require("../services/customerService");
 
-const getCustomers = async (req, res) => {
+const getCustomers = async (req, res, next) => {
   try {
     const customers = await customerService.getAllCustomers();
     res.json(customers);
   } catch (err) {
-    console.error("Müşterileri getirme hatası:", err);
-    res.status(500).json({ message: "Sunucu hatası" });
+    next(err);
   }
 };
 
-const getCustomer = async (req, res) => {
+const getCustomer = async (req, res, next) => {
   try {
-    const customer = await customerService.getCustomerById(req.params.id);
+    const numericId = parseInt(req.params.id, 10);
+    if (!numericId || isNaN(numericId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Geçersiz müşteri ID'si.",
+      });
+    }
+
+    const customer = await customerService.getCustomerById(numericId);
     if (!customer) {
-      return res.status(404).json({ message: "Müşteri bulunamadı" });
+      return res.status(404).json({
+        success: false,
+        message: "Müşteri bulunamadı.",
+      });
     }
     res.json(customer);
   } catch (err) {
-    console.error("Müşteri getirme hatası:", err);
-    res.status(500).json({ message: "Sunucu hatası" });
+    next(err);
   }
 };
 
-const createNewCustomer = async (req, res) => {
+const createNewCustomer = async (req, res, next) => {
   try {
+    const { name, phone } = req.body;
+    if (!name || name.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Müşteri adı zorunludur.",
+      });
+    }
+
     const newCustomer = await customerService.createCustomer(req.body);
     res.status(201).json(newCustomer);
   } catch (err) {
-    console.error("Müşteri oluşturma hatası:", err);
-    res.status(500).json({ message: "Sunucu hatası" });
+    next(err);
   }
 };
 
-const updateExistingCustomer = async (req, res) => {
+const updateExistingCustomer = async (req, res, next) => {
   try {
-    const updated = await customerService.updateCustomer(
-      req.params.id,
-      req.body,
-    );
+    const numericId = parseInt(req.params.id, 10);
+    if (!numericId || isNaN(numericId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Geçersiz müşteri ID'si.",
+      });
+    }
+
+    const updated = await customerService.updateCustomer(numericId, req.body);
     if (!updated) {
-      return res.status(404).json({ message: "Müşteri bulunamadı" });
+      return res.status(404).json({
+        success: false,
+        message: "Müşteri bulunamadı.",
+      });
     }
     res.json(updated);
   } catch (err) {
-    console.error("Müşteri güncelleme hatası:", err);
-    res.status(500).json({ message: "Sunucu hatası" });
+    next(err);
   }
 };
 
-const removeCustomer = async (req, res) => {
+const removeCustomer = async (req, res, next) => {
   try {
-    const deleted = await customerService.deleteCustomer(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ message: "Müşteri bulunamadı" });
+    const numericId = parseInt(req.params.id, 10);
+    if (!numericId || isNaN(numericId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Geçersiz müşteri ID'si.",
+      });
     }
-    res.json({ message: "Müşteri başarıyla silindi" });
+
+    const deleted = await customerService.deleteCustomer(numericId);
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Müşteri bulunamadı.",
+      });
+    }
+    res.json({
+      success: true,
+      message: "Müşteri başarıyla silindi.",
+    });
   } catch (err) {
-    console.error("Müşteri silme hatası:", err);
-    res.status(500).json({ message: "Sunucu hatası" });
+    next(err);
   }
 };
 

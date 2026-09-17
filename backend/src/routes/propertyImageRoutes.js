@@ -3,9 +3,8 @@ const express = require("express");
 const router = express.Router({ mergeParams: true });
 
 const PropertyImageController = require("../controllers/propertyImageController");
-
 const upload = require("../middleware/uploadMiddleware");
-
+const { uploadLimiter } = require("../middleware/rateLimiter");
 const { authenticate } = require("../middleware/authMiddleware");
 const { requireAdmin } = require("../middleware/roleMiddleware");
 
@@ -18,14 +17,15 @@ router.get("/", PropertyImageController.getImages);
 
 // =====================================================
 // ADMIN
-// FOTOĞRAF YÜKLE
+// FOTOĞRAF YÜKLE (Rate Limit & Multer Protected)
 // =====================================================
 
 router.post(
   "/",
   authenticate,
   requireAdmin,
-  upload.any(),
+  uploadLimiter,
+  upload.array("images", 20),
   PropertyImageController.uploadImages,
 );
 

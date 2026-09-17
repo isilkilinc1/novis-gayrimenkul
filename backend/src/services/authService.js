@@ -2,6 +2,14 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const pool = require("../config/database");
 
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET || (process.env.NODE_ENV !== "production" ? "novis_dev_secret" : null);
+  if (!secret) {
+    throw new Error("JWT_SECRET_MISSING");
+  }
+  return secret;
+};
+
 const loginUser = async (email, password) => {
   const result = await pool.query(
     `
@@ -34,8 +42,9 @@ const loginUser = async (email, password) => {
       role: user.role,
       email: user.email,
     },
-    process.env.JWT_SECRET,
+    getJwtSecret(),
     {
+      algorithm: "HS256",
       expiresIn: process.env.JWT_EXPIRES_IN || "1h",
     },
   );
@@ -137,8 +146,9 @@ const updateAdminAccount = async ({
       role: updatedUser.role,
       email: updatedUser.email,
     },
-    process.env.JWT_SECRET,
+    getJwtSecret(),
     {
+      algorithm: "HS256",
       expiresIn: process.env.JWT_EXPIRES_IN || "1h",
     },
   );

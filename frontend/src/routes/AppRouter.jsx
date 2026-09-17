@@ -9,6 +9,7 @@ import Properties from "../pages/public/Properties";
 import PropertyDetail from "../pages/public/PropertyDetail";
 import About from "../pages/public/About";
 import Contact from "../pages/public/Contact";
+import NotFound from "../pages/public/NotFound";
 
 import Login from "../pages/admin/Login";
 import Dashboard from "../pages/admin/Dashboard";
@@ -32,6 +33,7 @@ function AppRouter() {
           <Route path="/ilan/:id" element={<PropertyDetail />} />
           <Route path="/hakkimizda" element={<About />} />
           <Route path="/iletisim" element={<Contact />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
 
         {/* ADMIN LOGIN */}

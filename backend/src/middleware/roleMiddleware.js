@@ -2,6 +2,7 @@ const requireAdmin = (req, res, next) => {
   // 1. Önce authMiddleware çalışmış ve req.user doldurulmuş olmalı
   if (!req.user) {
     return res.status(401).json({
+      success: false,
       message: "Kimlik doğrulama gerekli.",
     });
   }
@@ -9,6 +10,7 @@ const requireAdmin = (req, res, next) => {
   // 2. Kullanıcının rolü admin değilse içeri alma
   if (req.user.role !== "admin") {
     return res.status(403).json({
+      success: false,
       message: "Bu işlem için admin yetkisi gereklidir.",
     });
   }

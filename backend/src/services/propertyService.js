@@ -348,27 +348,6 @@ const createProperty = async (propertyData) => {
     throw error;
   }
 
-  console.log("========== İLAN VERİLERİ ==========");
-  console.log("property_type:", property_type);
-  console.log("title:", title);
-  console.log("description:", description);
-  console.log("listing_type:", listing_type);
-  console.log("status:", status);
-  console.log("price:", price);
-  console.log("city:", city);
-  console.log("district:", district);
-  console.log("neighborhood:", neighborhood);
-  console.log("address:", address);
-  console.log("rooms:", rooms);
-  console.log("square_meters:", square_meters);
-  console.log("floor:", floor);
-  console.log("building_age:", building_age);
-  console.log("heating_type:", heating_type);
-  console.log("balcony:", balcony);
-  console.log("latitude:", parsedLatitude);
-  console.log("longitude:", parsedLongitude);
-  console.log("==================================");
-
   const result = await pool.query(
     `
     INSERT INTO properties (

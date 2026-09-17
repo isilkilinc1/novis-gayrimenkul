@@ -58,6 +58,10 @@ class PropertyImageController {
 
   // Medya yükle (Fotoğraf & Video)
   static async uploadImages(req, res, next) {
+    const uploadedFiles = req.files && req.files.length > 0
+      ? req.files
+      : (req.file ? [req.file] : []);
+
     try {
       const { propertyId } = req.params;
       const numericPropertyId = parseInt(propertyId, 10);
@@ -69,7 +73,7 @@ class PropertyImageController {
         });
       }
 
-      if (!req.files || req.files.length === 0) {
+      if (uploadedFiles.length === 0) {
         return res.status(400).json({
           success: false,
           message: "Lütfen en az bir dosya seçin.",
@@ -83,6 +87,12 @@ class PropertyImageController {
         (img) => img.is_cover && img.media_type !== "video",
       );
 
+      const explicitIsCover =
+        req.body.isCover === true ||
+        req.body.isCover === "true" ||
+        req.body.is_cover === true ||
+        req.body.is_cover === "true";
+
       const coverIndex =
         req.body.coverIndex !== undefined && req.body.coverIndex !== ""
           ? Number(req.body.coverIndex)
@@ -93,11 +103,11 @@ class PropertyImageController {
       let coverAssignedInBatch = false;
       const savedImages = [];
 
-      for (let i = 0; i < req.files.length; i++) {
-        const file = req.files[i];
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        const file = uploadedFiles[i];
 
         const isVideo =
-          file.mimetype.startsWith("video/") ||
+          file.mimetype?.startsWith("video/") ||
           /\.(mp4|webm|mov|avi|mkv)$/i.test(file.originalname);
 
         const mediaType = isVideo ? "video" : "image";
@@ -115,7 +125,10 @@ class PropertyImageController {
         // Kapak fotoğrafı mantığı (Videolar asla kapak olamaz)
         let isCover = false;
         if (!isVideo) {
-          if (coverIndex !== null && coverIndex === i) {
+          if (explicitIsCover) {
+            isCover = true;
+            coverAssignedInBatch = true;
+          } else if (coverIndex !== null && coverIndex === i) {
             isCover = true;
             coverAssignedInBatch = true;
           } else if (coverFileName && file.originalname === coverFileName) {
@@ -148,11 +161,11 @@ class PropertyImageController {
       });
     } catch (error) {
       // Yükleme sırasında hata olursa Cloudinary'e yüklenmiş geçici medyaları temizle
-      if (req.files && req.files.length > 0) {
-        for (const file of req.files) {
+      if (uploadedFiles && uploadedFiles.length > 0) {
+        for (const file of uploadedFiles) {
           if (file.path?.startsWith("http") && file.filename) {
             const isVideo =
-              file.mimetype.startsWith("video/") ||
+              file.mimetype?.startsWith("video/") ||
               /\.(mp4|webm|mov|avi|mkv)$/i.test(file.originalname);
 
             try {
@@ -165,6 +178,7 @@ class PropertyImageController {
           }
         }
       }
+
       next(error);
     }
   }

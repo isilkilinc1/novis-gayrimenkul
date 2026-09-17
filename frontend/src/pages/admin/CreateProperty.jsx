@@ -197,10 +197,13 @@ function CreateProperty() {
     });
   };
 
+  const [uploadStatus, setUploadStatus] = useState("");
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+    setUploadStatus("İlan bilgileri kaydediliyor...");
 
     try {
       const payload = {
@@ -221,31 +224,36 @@ function CreateProperty() {
       const newProperty = await createProperty(payload);
       const newPropertyId = newProperty.id;
 
-      // 2. Eğer kullanıcı medya (fotoğraf/video) seçtiyse, yeni oluşan ilan ID'sine yükle
+      // 2. Eğer kullanıcı medya (fotoğraf/video) seçtiyse, medyaları tek tek güvenle yükle
       if (mediaFiles.length > 0 && newPropertyId) {
-        const formDataImages = new FormData();
-        let coverIndex = -1;
+        const total = mediaFiles.length;
+        const failedFiles = [];
 
-        mediaFiles.forEach((item, index) => {
+        for (let i = 0; i < total; i++) {
+          const item = mediaFiles[i];
+          setUploadStatus(
+            `Medyalar yükleniyor (${i + 1} / ${total}): ${item.name}...`,
+          );
+
+          const formDataImages = new FormData();
           formDataImages.append("images", item.file);
-          if (!item.isVideo && item.isCover) {
-            coverIndex = index;
+          if (item.isCover && !item.isVideo) {
+            formDataImages.append("isCover", "true");
           }
-        });
 
-        // Eğer açıkça kapak seçilmemişse ama fotoğraf varsa, ilk fotoğrafın indeksini gönder
-        if (coverIndex === -1) {
-          coverIndex = mediaFiles.findIndex((item) => !item.isVideo);
-        }
-
-        if (coverIndex !== -1) {
-          formDataImages.append("coverIndex", coverIndex.toString());
-          if (mediaFiles[coverIndex]) {
-            formDataImages.append("coverFileName", mediaFiles[coverIndex].file.name);
+          try {
+            await uploadPropertyImages(newPropertyId, formDataImages);
+          } catch (fileErr) {
+            console.error(`Medya yükleme hatası (${item.name}):`, fileErr);
+            failedFiles.push(item.name);
           }
         }
 
-        await uploadPropertyImages(newPropertyId, formDataImages);
+        if (failedFiles.length > 0) {
+          alert(
+            `İlan başarıyla oluşturuldu ancak şu ${failedFiles.length} dosya yüklenemedi: ${failedFiles.join(", ")}. İlanı düzenleyerek tekrar ekleyebilirsiniz.`,
+          );
+        }
       }
 
       navigate("/admin/ilanlar");
@@ -257,6 +265,7 @@ function CreateProperty() {
       );
     } finally {
       setLoading(false);
+      setUploadStatus("");
     }
   };
 
@@ -674,6 +683,18 @@ function CreateProperty() {
             )}
           </div>
 
+          {uploadStatus && (
+            <div className="p-4 bg-blue-50 border border-blue-200 text-blue-800 rounded-xl text-sm flex items-center gap-3 animate-pulse">
+              <span className="text-xl">⏳</span>
+              <div>
+                <p className="font-semibold">{uploadStatus}</p>
+                <p className="text-xs text-blue-600 mt-0.5">
+                  Lütfen işlem tamamlanana kadar sayfayı kapatmayın.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="pt-4 border-t border-gray-100 flex justify-end">
             <Button
               type="submit"
@@ -681,7 +702,7 @@ function CreateProperty() {
               className="w-full sm:w-auto"
             >
               {loading
-                ? "Kaydediliyor..."
+                ? uploadStatus || "Kaydediliyor..."
                 : "İlanı Kaydet ve Medyaları Yükle"}
             </Button>
           </div>

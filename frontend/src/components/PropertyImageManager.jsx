@@ -62,6 +62,8 @@ export default function PropertyImageManager({ propertyId }) {
   // MEDYA (FOTOĞRAF / VİDEO) YÜKLE
   // ======================================================
 
+  const [uploadStatus, setUploadStatus] = useState("");
+
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files || []);
 
@@ -69,31 +71,48 @@ export default function PropertyImageManager({ propertyId }) {
       return;
     }
 
-    const formData = new FormData();
-
-    files.forEach((file) => {
-      formData.append("images", file);
-    });
-
     try {
       setUploading(true);
       setError("");
 
-      await uploadPropertyImages(propertyId, formData);
+      const failedFiles = [];
+      const total = files.length;
+
+      for (let i = 0; i < total; i++) {
+        const file = files[i];
+        setUploadStatus(
+          `Yükleniyor (${i + 1}/${total}): ${file.name}...`,
+        );
+
+        const formData = new FormData();
+        formData.append("images", file);
+
+        try {
+          await uploadPropertyImages(propertyId, formData);
+        } catch (fileErr) {
+          console.error(`Dosya yükleme hatası (${file.name}):`, fileErr);
+          failedFiles.push(file.name);
+        }
+      }
 
       // Yükleme tamamlandıktan sonra medyaları yeniden getir
       const data = await getPropertyImages(propertyId);
-
       setImages(Array.isArray(data) ? data : []);
+
+      if (failedFiles.length > 0) {
+        setError(
+          `Şu ${failedFiles.length} dosya yüklenemedi: ${failedFiles.join(", ")}. Diğer dosyalar başarıyla yüklendi.`,
+        );
+      }
     } catch (err) {
       console.error("Medya yükleme hatası:", err);
-
       setError(
         err.response?.data?.message ||
           "Medyalar yüklenirken bir hata oluştu.",
       );
     } finally {
       setUploading(false);
+      setUploadStatus("");
 
       // Aynı dosyayı tekrar seçebilmek için input'u sıfırla
       e.target.value = "";
@@ -189,7 +208,9 @@ export default function PropertyImageManager({ propertyId }) {
             uploading ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
-          <span>{uploading ? "Yükleniyor..." : "+ Medya Yükle"}</span>
+          <span>
+            {uploading ? uploadStatus || "Yükleniyor..." : "+ Medya Yükle"}
+          </span>
 
           <input
             type="file"

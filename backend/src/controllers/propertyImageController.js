@@ -311,6 +311,77 @@ class PropertyImageController {
       next(error);
     }
   }
+
+  // Medya indir (Fotoğraf & Video)
+  static async downloadImage(req, res, next) {
+    try {
+      const { imageId } = req.params;
+      const numericImageId = parseInt(imageId, 10);
+
+      if (!numericImageId || isNaN(numericImageId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Geçersiz medya ID'si.",
+        });
+      }
+
+      const image = await PropertyImageService.getImageById(numericImageId);
+
+      if (!image || !image.image_url) {
+        return res.status(404).json({
+          success: false,
+          message: "Medya bulunamadı.",
+        });
+      }
+
+      const isVideo = image.media_type === "video";
+      const extMatch = image.image_url.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
+      const ext = extMatch
+        ? extMatch[1]
+        : isVideo
+          ? "mp4"
+          : "jpg";
+      const defaultFilename = `ilan-${image.property_id}-${isVideo ? "video" : "fotograf"}-${image.id}.${ext}`;
+      const filename = req.query.filename || defaultFilename;
+
+      if (
+        image.image_url.startsWith("http://") ||
+        image.image_url.startsWith("https://")
+      ) {
+        const https = image.image_url.startsWith("https")
+          ? require("https")
+          : require("http");
+
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${encodeURIComponent(filename)}"`,
+        );
+
+        https
+          .get(image.image_url, (stream) => {
+            if (stream.headers["content-type"]) {
+              res.setHeader("Content-Type", stream.headers["content-type"]);
+            }
+            stream.pipe(res);
+          })
+          .on("error", (err) => {
+            next(err);
+          });
+      } else {
+        const filePath = path.join(__dirname, "../..", image.image_url);
+        if (fs.existsSync(filePath)) {
+          return res.download(filePath, filename);
+        } else {
+          return res.status(404).json({
+            success: false,
+            message: "Dosya bulunamadı.",
+          });
+        }
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = PropertyImageController;

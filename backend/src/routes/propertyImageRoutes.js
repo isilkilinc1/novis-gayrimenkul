@@ -65,4 +65,16 @@ router.patch(
   PropertyImageController.reorderImages,
 );
 
+// =====================================================
+// ADMIN
+// FOTOĞRAF / MEDYA İNDİR
+// =====================================================
+
+router.get(
+  "/:imageId/download",
+  authenticate,
+  requireAdmin,
+  PropertyImageController.downloadImage,
+);
+
 module.exports = router;

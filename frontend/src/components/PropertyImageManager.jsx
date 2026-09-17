@@ -5,6 +5,7 @@ import {
   uploadPropertyImages,
   deletePropertyImage,
   setCoverImage,
+  downloadPropertyImage,
 } from "../services/propertyService";
 import { getFullImageUrl } from "../utils/imageUrl";
 
@@ -12,6 +13,7 @@ export default function PropertyImageManager({ propertyId }) {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
   const [error, setError] = useState("");
 
   // ======================================================
@@ -183,6 +185,77 @@ export default function PropertyImageManager({ propertyId }) {
   };
 
   // ======================================================
+  // MEDYA (FOTOĞRAF / VİDEO) İNDİR
+  // ======================================================
+
+  const handleDownload = async (img, index) => {
+    const isVideo =
+      img.media_type === "video" ||
+      Boolean(img.image_url?.match(/\.(mp4|webm|mov|avi|mkv)$/i));
+
+    const rawUrl = getFullImageUrl(img.image_url);
+    const extMatch = rawUrl.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
+    const ext = extMatch
+      ? extMatch[1].toLowerCase()
+      : isVideo
+        ? "mp4"
+        : "jpg";
+
+    const filename = `ilan-${propertyId}-${isVideo ? "video" : "fotograf"}-${index + 1}.${ext}`;
+
+    try {
+      setDownloadingId(img.id);
+      setError("");
+
+      let downloaded = false;
+      try {
+        const res = await fetch(rawUrl, { mode: "cors" });
+        if (res.ok) {
+          const blob = await res.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(blobUrl);
+          document.body.removeChild(a);
+          downloaded = true;
+        }
+      } catch (fetchErr) {
+        console.warn(
+          "Doğrudan fetch ile indirme başarısız, backend servisi deneniyor...",
+          fetchErr,
+        );
+      }
+
+      if (!downloaded) {
+        await downloadPropertyImage(propertyId, img.id, filename);
+      }
+    } catch (err) {
+      console.error("Medya indirme hatası:", err);
+
+      try {
+        const fallbackA = document.createElement("a");
+        fallbackA.href = rawUrl;
+        fallbackA.download = filename;
+        fallbackA.target = "_blank";
+        fallbackA.rel = "noopener noreferrer";
+        document.body.appendChild(fallbackA);
+        fallbackA.click();
+        document.body.removeChild(fallbackA);
+      } catch {
+        setError(
+          err.response?.data?.message ||
+            "Medya indirilirken bir sorun oluştu.",
+        );
+      }
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  // ======================================================
   // RENDER
   // ======================================================
 
@@ -300,38 +373,72 @@ export default function PropertyImageManager({ propertyId }) {
                 </div>
 
                 {/* AKSİYONLAR */}
-                <div className="p-2 flex justify-between items-center bg-white border-t border-gray-100">
-                  {!isVideo ? (
-                    !img.is_cover ? (
-                      <button
-                        type="button"
-                        onClick={() => handleSetCover(img.id)}
-                        className="text-xs text-blue-600 hover:text-blue-800 hover:underline font-medium"
-                      >
-                        Kapak Yap
-                      </button>
-                    ) : (
-                      <span className="text-xs text-amber-600 font-semibold">
-                        Kapak Fotoğrafı
+                <div className="p-2 flex justify-between items-center gap-1.5 bg-white border-t border-gray-100">
+                  <div className="flex-1 min-w-0">
+                    {!isVideo ? (
+                      !img.is_cover ? (
+                        <button
+                          type="button"
+                          onClick={() => handleSetCover(img.id)}
+                          className="text-xs text-blue-600 hover:text-blue-800 hover:underline font-medium truncate block cursor-pointer"
+                        >
+                          Kapak Yap
+                        </button>
+                      ) : (
+                        <span className="text-xs text-amber-600 font-semibold truncate block">
+                          Kapak Fotoğrafı
+                        </span>
+                      )
+                    ) : isFallbackVideoCover ? (
+                      <span className="text-xs text-amber-600 font-semibold truncate block">
+                        Otomatik Kapak
                       </span>
-                    )
-                  ) : isFallbackVideoCover ? (
-                    <span className="text-xs text-amber-600 font-semibold">
-                      Otomatik Kapak
-                    </span>
-                  ) : (
-                    <span className="text-xs text-gray-400 font-medium italic">
-                      Video
-                    </span>
-                  )}
+                    ) : (
+                      <span className="text-xs text-gray-400 font-medium italic truncate block">
+                        Video
+                      </span>
+                    )}
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(img)}
-                    className="text-xs text-red-500 hover:text-red-700 font-medium"
-                  >
-                    Sil
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {/* İNDİR BUTONU (KÜÇÜK KARE İKON) */}
+                    <button
+                      type="button"
+                      disabled={downloadingId === img.id}
+                      onClick={() => handleDownload(img, index)}
+                      className="w-7 h-7 flex items-center justify-center rounded-md border border-gray-200 bg-gray-50 hover:bg-novis-cream hover:border-novis-bronze/40 text-gray-700 hover:text-novis-anthracite transition text-xs cursor-pointer disabled:opacity-50"
+                      title={isVideo ? "Videoyu indir" : "Fotoğrafı indir"}
+                      aria-label={isVideo ? "Videoyu indir" : "Fotoğrafı indir"}
+                    >
+                      {downloadingId === img.id ? (
+                        <span className="animate-spin text-[10px]">⏳</span>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-3.5 h-3.5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                          />
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* SİL BUTONU */}
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(img)}
+                      className="text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer"
+                    >
+                      Sil
+                    </button>
+                  </div>
                 </div>
               </div>
             );

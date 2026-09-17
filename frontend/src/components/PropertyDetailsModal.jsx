@@ -54,6 +54,22 @@ const normalizePropertyData = (item) => {
 
 export function PropertyInfoCard({ property, item, onEditClick }) {
   const prop = normalizePropertyData(property || item);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // ESC tuşu ile lightbox'ı kapat
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setLightboxOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, [lightboxOpen]);
 
   if (!prop || !prop.id) {
     return (
@@ -102,11 +118,24 @@ export function PropertyInfoCard({ property, item, onEditClick }) {
       <div>
         <div className="flex gap-3 items-start">
           {prop.cover_image ? (
-            <img
-              src={prop.cover_image}
-              alt={prop.title}
-              className="w-16 h-16 rounded-lg object-cover border border-novis-bronze/20 shrink-0"
-            />
+            <div className="relative group/cover shrink-0">
+              <img
+                src={prop.cover_image}
+                alt={prop.title}
+                onClick={() => setLightboxOpen(true)}
+                className="w-16 h-16 rounded-lg object-cover border border-novis-bronze/20 cursor-pointer hover:opacity-90 hover:ring-2 hover:ring-novis-gold transition shadow-xs"
+                title="Büyük boyutta görüntülemek için tıklayın"
+              />
+              <button
+                type="button"
+                onClick={() => setLightboxOpen(true)}
+                className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 text-white rounded-lg opacity-0 group-hover/cover:opacity-100 transition cursor-pointer"
+                title="Büyük boyutta görüntüle"
+                aria-label="Fotoğrafı büyüt"
+              >
+                <span className="text-xs">🔍</span>
+              </button>
+            </div>
           ) : (
             <div className="w-16 h-16 rounded-lg bg-novis-cream flex items-center justify-center text-xl border border-novis-bronze/20 shrink-0">
               {typeIcon}
@@ -185,6 +214,47 @@ export function PropertyInfoCard({ property, item, onEditClick }) {
           )}
         </div>
       </div>
+
+      {/* LIGHTBOX / BÜYÜK FOTOĞRAF MODALI */}
+      {lightboxOpen && prop.cover_image && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <div
+            className="relative max-w-5xl w-full max-h-[90vh] flex flex-col items-center justify-center p-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Kapatma Butonu */}
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(false)}
+              className="absolute top-2 right-2 md:-top-10 md:-right-2 text-white/90 hover:text-white text-2xl font-bold bg-black/70 hover:bg-black/90 rounded-full w-10 h-10 flex items-center justify-center transition cursor-pointer z-10 shadow-xl border border-white/20"
+              aria-label="Kapat"
+              title="Kapat (ESC)"
+            >
+              ✕
+            </button>
+
+            {/* Büyük Fotoğraf */}
+            <img
+              src={prop.cover_image}
+              alt={prop.title}
+              className="max-h-[80vh] max-w-full object-contain rounded-xl shadow-2xl border border-white/10 select-none"
+            />
+
+            {/* İlan Başlığı ve Alt Bilgi */}
+            <div className="mt-3 flex items-center justify-between gap-3 max-w-full bg-black/70 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 text-white text-xs">
+              <span className="font-semibold truncate">
+                🏢 #{prop.id} - {prop.title}
+              </span>
+              <span className="text-gray-300 text-[11px] shrink-0">
+                Kapatmak için dışarıya tıklayın veya ESC tuşuna basın
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

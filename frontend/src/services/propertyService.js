@@ -183,3 +183,33 @@ export const setCoverImage = async (propertyId, imageId) => {
 
   return response.data;
 };
+
+// ======================================================
+// FOTOĞRAF / MEDYA İNDİR
+// ======================================================
+
+// İlan fotoğrafı/medyası indir
+export const downloadPropertyImage = async (propertyId, imageId, filename) => {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.get(
+    `${API_URL}/properties/${propertyId}/images/${imageId}/download`,
+    {
+      params: { filename },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      responseType: "blob",
+    },
+  );
+
+  const blob = new Blob([response.data]);
+  const blobUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(blobUrl);
+  document.body.removeChild(a);
+};

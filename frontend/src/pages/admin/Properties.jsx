@@ -9,6 +9,7 @@ import { getCustomers } from "../../services/customerService"; // Müşteri seç
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
+import { getFullImageUrl } from "../../utils/imageUrl";
 
 const getPropertyStatusLabel = (status) => {
   const labels = {
@@ -28,6 +29,31 @@ const getPropertyStatusVariant = (status) => {
     RENTED: "bronze",
   };
   return variants[status] || "default";
+};
+
+const getPropertyTypeBadgeClass = (type) => {
+  switch (type) {
+    case "HOUSE":
+      return "bg-novis-brown/15 text-novis-brown border-novis-brown/30";
+    case "COMMERCIAL":
+      return "bg-novis-gold/20 text-amber-900 border-novis-gold/40";
+    case "LAND":
+      return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    default:
+      return "bg-gray-100 text-gray-700 border-gray-200";
+  }
+};
+
+const getPropertyPlaceholder = (type) => {
+  switch (type) {
+    case "LAND":
+      return "/images/land-placeholder.jpg";
+    case "COMMERCIAL":
+      return "/images/commercial-placeholder.jpg";
+    case "HOUSE":
+    default:
+      return "/images/property-placeholder.jpg";
+  }
 };
 
 function Properties() {
@@ -295,20 +321,16 @@ function Properties() {
                       className="hover:bg-gray-50/50 transition"
                     >
                       <td className="py-4 px-6">
-                        <div className="h-12 w-16 rounded-lg bg-novis-cream flex items-center justify-center text-lg border border-novis-bronze/20 overflow-hidden">
-                          {property.cover_image ? (
-                            <img
-                              src={property.cover_image}
-                              alt={property.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : property.property_type === "LAND" ? (
-                            "🌳"
-                          ) : property.property_type === "COMMERCIAL" ? (
-                            "🏪"
-                          ) : (
-                            "🏠"
-                          )}
+                        <div className="h-12 w-16 rounded-lg bg-novis-cream flex items-center justify-center text-lg border border-novis-bronze/20 overflow-hidden shadow-xs">
+                          <img
+                            src={
+                              property.cover_image
+                                ? getFullImageUrl(property.cover_image)
+                                : getPropertyPlaceholder(property.property_type)
+                            }
+                            alt={property.title}
+                            className="w-full h-full object-cover select-none"
+                          />
                         </div>
                       </td>
                       <td className="py-4 px-6 font-medium text-novis-anthracite max-w-xs truncate">
@@ -322,7 +344,9 @@ function Properties() {
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                        <span
+                          className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border ${getPropertyTypeBadgeClass(property.property_type)}`}
+                        >
                           {property.property_type === "HOUSE" && "Konut"}
                           {property.property_type === "LAND" && "Arsa"}
                           {property.property_type === "COMMERCIAL" && "İşyeri"}

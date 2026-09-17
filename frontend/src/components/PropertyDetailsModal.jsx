@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getPropertyById } from "../services/propertyService";
+import { getFullImageUrl } from "../utils/imageUrl";
 import Button from "./ui/Button";
 
 const PROPERTY_TYPE_LABELS = {
@@ -19,6 +20,18 @@ const PROPERTY_STATUS_LABELS = {
   INACTIVE: "Yayından Kaldırıldı",
   SOLD: "Satıldı",
   RENTED: "Kiralandı",
+};
+
+const getPropertyPlaceholder = (type) => {
+  switch (type) {
+    case "LAND":
+      return "/images/land-placeholder.jpg";
+    case "COMMERCIAL":
+      return "/images/commercial-placeholder.jpg";
+    case "HOUSE":
+    default:
+      return "/images/property-placeholder.jpg";
+  }
 };
 
 const formatPropertyPrice = (value) => {
@@ -86,12 +99,10 @@ export function PropertyInfoCard({ property, item, onEditClick }) {
     );
   }
 
-  const typeIcon =
-    prop.property_type === "LAND"
-      ? "🌳"
-      : prop.property_type === "COMMERCIAL"
-        ? "🏪"
-        : "🏠";
+  const hasRealImage = Boolean(prop.cover_image);
+  const imageUrl = hasRealImage
+    ? getFullImageUrl(prop.cover_image)
+    : getPropertyPlaceholder(prop.property_type);
 
   const locationText =
     [prop.city, prop.district, prop.neighborhood]
@@ -117,10 +128,10 @@ export function PropertyInfoCard({ property, item, onEditClick }) {
 
       <div>
         <div className="flex gap-3 items-start">
-          {prop.cover_image ? (
+          {hasRealImage ? (
             <div className="relative group/cover shrink-0">
               <img
-                src={prop.cover_image}
+                src={imageUrl}
                 alt={prop.title}
                 onClick={() => setLightboxOpen(true)}
                 className="w-16 h-16 rounded-lg object-cover border border-novis-bronze/20 cursor-pointer hover:opacity-90 hover:ring-2 hover:ring-novis-gold transition shadow-xs"
@@ -137,8 +148,12 @@ export function PropertyInfoCard({ property, item, onEditClick }) {
               </button>
             </div>
           ) : (
-            <div className="w-16 h-16 rounded-lg bg-novis-cream flex items-center justify-center text-xl border border-novis-bronze/20 shrink-0">
-              {typeIcon}
+            <div className="shrink-0">
+              <img
+                src={imageUrl}
+                alt={prop.title}
+                className="w-16 h-16 rounded-lg object-cover border border-novis-bronze/20 select-none shadow-xs"
+              />
             </div>
           )}
 
@@ -216,7 +231,7 @@ export function PropertyInfoCard({ property, item, onEditClick }) {
       </div>
 
       {/* LIGHTBOX / BÜYÜK FOTOĞRAF MODALI */}
-      {lightboxOpen && prop.cover_image && (
+      {lightboxOpen && hasRealImage && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
           onClick={() => setLightboxOpen(false)}
@@ -238,7 +253,7 @@ export function PropertyInfoCard({ property, item, onEditClick }) {
 
             {/* Büyük Fotoğraf */}
             <img
-              src={prop.cover_image}
+              src={imageUrl}
               alt={prop.title}
               className="max-h-[80vh] max-w-full object-contain rounded-xl shadow-2xl border border-white/10 select-none"
             />

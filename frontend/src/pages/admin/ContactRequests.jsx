@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import {
   getContactRequests,
   updateContactStatus,
@@ -157,9 +158,9 @@ export default function ContactRequests() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-novis-cream/40 border-b border-novis-bronze/10 text-xs font-bold text-novis-anthracite uppercase">
+                  <tr className="bg-novis-cream/40 border-b border-novis-bronze/10 text-xs font-bold text-novis-anthracite uppercase tracking-wider">
                     <th className="p-4">Ad Soyad / İletişim</th>
-                    <th className="p-4">İlgilendiği İlan</th>
+                    <th className="p-4">İLGİLENDİĞİ İLAN</th>
                     <th className="p-4">Mesaj</th>
                     <th className="p-4">Durum</th>
                     <th className="p-4">Tarih</th>
@@ -191,8 +192,20 @@ export default function ContactRequests() {
                         )}
                       </td>
                       <td className="p-4 text-xs font-medium text-novis-anthracite">
-                        {req.property_title ? (
-                          <span className="bg-novis-cream/60 px-2 py-1 rounded border border-novis-bronze/20">
+                        {req.property_id ? (
+                          <Link
+                            to={`/admin/ilanlar/duzenle/${req.property_id}`}
+                            className="inline-flex items-center gap-1.5 bg-novis-cream/60 hover:bg-novis-cream text-novis-anthracite hover:text-novis-gold px-2.5 py-1.5 rounded-lg border border-novis-bronze/20 transition group"
+                            title="İlanı Yönet / Düzenle"
+                          >
+                            <span>🏢</span>
+                            <span className="font-semibold underline decoration-dotted group-hover:decoration-solid">
+                              {req.property_title || `İlan #${req.property_id}`}
+                            </span>
+                            <span className="text-[10px] text-gray-400 group-hover:text-novis-gold">↗</span>
+                          </Link>
+                        ) : req.property_title ? (
+                          <span className="inline-flex items-center gap-1 bg-gray-50 text-gray-500 px-2 py-1 rounded border border-gray-200">
                             🏢 {req.property_title}
                           </span>
                         ) : (

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import * as XLSX from "xlsx";
 import {
   getCustomers,
@@ -7,6 +7,7 @@ import {
   updateCustomer,
   deleteCustomer,
 } from "../../services/customerService";
+import { getAdminProperties } from "../../services/propertyService";
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -14,6 +15,7 @@ import Input from "../../components/ui/Input";
 export default function Customers() {
   const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
+  const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,7 +38,20 @@ export default function Customers() {
     demand: "",
     status: "NEW",
     notes: "",
+    property_id: "",
   });
+
+  // =========================================================
+  // İLANLARI GETİR
+  // =========================================================
+  const fetchProperties = useCallback(async () => {
+    try {
+      const data = await getAdminProperties();
+      setProperties(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("İlanlar yüklenemedi:", err);
+    }
+  }, []);
 
   // =========================================================
   // MÜŞTERİLERİ GETİR
@@ -60,7 +75,8 @@ export default function Customers() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCustomers();
-  }, [fetchCustomers]);
+    fetchProperties();
+  }, [fetchCustomers, fetchProperties]);
 
   // =========================================================
   // FORM DEĞİŞİKLİKLERİ
@@ -86,6 +102,7 @@ export default function Customers() {
       demand: "",
       status: "NEW",
       notes: "",
+      property_id: "",
     });
   };
 
@@ -99,6 +116,7 @@ export default function Customers() {
       await createCustomer({
         ...formData,
         budget: formData.budget ? Number(formData.budget) : null,
+        property_id: formData.property_id ? Number(formData.property_id) : null,
       });
 
       setShowAddModal(false);
@@ -128,6 +146,7 @@ export default function Customers() {
       demand: customer.demand || "",
       status: customer.status || "NEW",
       notes: customer.notes || "",
+      property_id: customer.property_id || "",
     });
 
     setShowEditModal(true);
@@ -145,6 +164,7 @@ export default function Customers() {
       await updateCustomer(selectedCustomer.id, {
         ...formData,
         budget: formData.budget ? Number(formData.budget) : null,
+        property_id: formData.property_id ? Number(formData.property_id) : null,
       });
 
       setShowEditModal(false);
@@ -196,13 +216,18 @@ export default function Customers() {
       CANCELLED: "İptal",
     };
 
-    // Filtrelenmiş veya tüm listeyi Excel'e aktarabiliriz (Burada tüm müşterileri baz alıyoruz)
+    // Tüm müşterileri Excel'e aktar
     const excelData = customers.map((customer) => ({
       "Ad Soyad": customer.name,
       Telefon: customer.phone,
       "E-posta": customer.email,
       Bütçe: customer.budget,
       Talep: customer.demand,
+      "İlgilendiği İlan": customer.property_title
+        ? `#${customer.property_id} - ${customer.property_title}`
+        : customer.property_id
+          ? `#${customer.property_id}`
+          : "-",
       Durum: statusLabels[customer.status] || customer.status,
       Not: customer.notes,
     }));
@@ -326,6 +351,8 @@ export default function Customers() {
     const email = normalizeText(customer.email);
     const budget = normalizeText(customer.budget);
     const demand = normalizeText(customer.demand);
+    const propertyTitle = normalizeText(customer.property_title);
+    const propertyId = String(customer.property_id || "");
     const status = normalizeText(customer.status);
     const statusText = normalizeText(getStatusText(customer.status));
     const notes = normalizeText(customer.notes);
@@ -336,6 +363,8 @@ export default function Customers() {
       email.includes(term) ||
       budget.includes(term) ||
       demand.includes(term) ||
+      propertyTitle.includes(term) ||
+      propertyId.includes(term) ||
       status.includes(term) ||
       statusText.includes(term) ||
       notes.includes(term)
@@ -347,7 +376,7 @@ export default function Customers() {
   // =========================================================
   return (
     <Container>
-      <div className="py-8 max-w-6xl mx-auto">
+      <div className="py-8 max-w-7xl mx-auto">
         {/* =====================================================
             BAŞLIK VE AKSİYON BUTONLARI
         ====================================================== */}
@@ -394,7 +423,7 @@ export default function Customers() {
 
             <input
               type="text"
-              placeholder="Ad, soyad, e-posta, telefon, durum, talep ara..."
+              placeholder="Ad, soyad, e-posta, telefon, durum, talep, ilan ara..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-xl border border-novis-bronze/30 bg-white pl-11 pr-10 py-3 text-novis-anthracite placeholder-gray-400 focus:border-novis-bronze focus:outline-none focus:ring-1 focus:ring-novis-bronze transition text-sm shadow-xs"
@@ -453,6 +482,7 @@ export default function Customers() {
                     <th className="p-4">Telefon</th>
                     <th className="p-4">Bütçe</th>
                     <th className="p-4">Talep</th>
+                    <th className="p-4">İLGİLENDİĞİ İLAN</th>
                     <th className="p-4">Durum</th>
                     <th className="p-4">Not</th>
                     <th className="p-4 text-right">İşlemler</th>
@@ -501,6 +531,24 @@ export default function Customers() {
 
                       <td className="p-4 text-gray-600">
                         {customer.demand || "-"}
+                      </td>
+
+                      <td className="p-4 text-xs font-medium text-novis-anthracite">
+                        {customer.property_id ? (
+                          <Link
+                            to={`/admin/ilanlar/duzenle/${customer.property_id}`}
+                            className="inline-flex items-center gap-1.5 bg-novis-cream/60 hover:bg-novis-cream text-novis-anthracite hover:text-novis-gold px-2.5 py-1.5 rounded-lg border border-novis-bronze/20 transition group max-w-[200px]"
+                            title={customer.property_title || `İlan #${customer.property_id}`}
+                          >
+                            <span>🏢</span>
+                            <span className="font-semibold underline decoration-dotted group-hover:decoration-solid truncate">
+                              {customer.property_title || `İlan #${customer.property_id}`}
+                            </span>
+                            <span className="text-[10px] text-gray-400 group-hover:text-novis-gold">↗</span>
+                          </Link>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
                       </td>
 
                       <td className="p-4">{getStatusBadge(customer.status)}</td>
@@ -634,6 +682,25 @@ export default function Customers() {
                   </div>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-novis-anthracite mb-2">
+                    İlgilendiği İlan (İsteğe Bağlı)
+                  </label>
+                  <select
+                    name="property_id"
+                    value={formData.property_id || ""}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-novis-bronze/30 bg-white px-4 py-3 text-novis-anthracite focus:border-novis-bronze focus:outline-none focus:ring-1 focus:ring-novis-bronze transition text-sm"
+                  >
+                    <option value="">— İlan Seçilmedi (Temizle) —</option>
+                    {properties.map((prop) => (
+                      <option key={prop.id} value={prop.id}>
+                        #{prop.id} - {prop.title} {prop.district ? "(" + prop.district + "/" + prop.city + ")" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <Input
                   label="Talep (Ne arıyor?)"
                   name="demand"
@@ -754,6 +821,25 @@ export default function Customers() {
                       <option value="CANCELLED">İptal</option>
                     </select>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-novis-anthracite mb-2">
+                    İlgilendiği İlan (İsteğe Bağlı)
+                  </label>
+                  <select
+                    name="property_id"
+                    value={formData.property_id || ""}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-novis-bronze/30 bg-white px-4 py-3 text-novis-anthracite focus:border-novis-bronze focus:outline-none focus:ring-1 focus:ring-novis-bronze transition text-sm"
+                  >
+                    <option value="">— İlan Seçilmedi (Temizle) —</option>
+                    {properties.map((prop) => (
+                      <option key={prop.id} value={prop.id}>
+                        #{prop.id} - {prop.title} {prop.district ? "(" + prop.district + "/" + prop.city + ")" : ""}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <Input

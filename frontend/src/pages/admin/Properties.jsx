@@ -38,7 +38,7 @@ function Properties() {
   const [error, setError] = useState(null);
 
   // Filtreleme ve Sıralama State'leri
-  const [listingFilter, setListingFilter] = useState("ALL"); // ALL, SALE, RENT
+  const [listingFilter, setListingFilter] = useState("ALL"); // ALL, SALE, RENT, SOLD, RENTED
   const [typeFilter, setTypeFilter] = useState("ALL"); // ALL, HOUSE, LAND, COMMERCIAL
   const [sortBy, setSortBy] = useState("date-desc"); // date-desc, date-asc, title-asc, price-asc, price-desc
 
@@ -136,8 +136,16 @@ function Properties() {
   // --- FİLTRELEME VE SIRALAMA MANTIĞI ---
   const filteredProperties = properties
     .filter((prop) => {
-      if (listingFilter !== "ALL" && prop.listing_type !== listingFilter)
-        return false;
+      if (listingFilter === "SALE") {
+        if (prop.listing_type !== "SALE" || prop.status === "SOLD" || prop.status === "RENTED") return false;
+      } else if (listingFilter === "RENT") {
+        if (prop.listing_type !== "RENT" || prop.status === "SOLD" || prop.status === "RENTED") return false;
+      } else if (listingFilter === "SOLD") {
+        if (prop.status !== "SOLD") return false;
+      } else if (listingFilter === "RENTED") {
+        if (prop.status !== "RENTED") return false;
+      }
+
       if (typeFilter !== "ALL" && prop.property_type !== typeFilter)
         return false;
       return true;
@@ -185,7 +193,7 @@ function Properties() {
 
       {/* FİLTRELEME VE SIRALAMA ÇUBUĞU */}
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white p-4 rounded-2xl border border-novis-bronze/20 shadow-sm">
-        {/* 1. İlan Tipi Filtresi (Hepsi / Satılık / Kiralık) */}
+        {/* 1. İlan Tipi Filtresi (Hepsi / Satılık / Kiralık / Satıldı / Kiralandı) */}
         <div>
           <label className="block text-xs font-semibold text-novis-brown uppercase mb-1">
             İlan Tipi
@@ -195,9 +203,11 @@ function Properties() {
             onChange={(e) => setListingFilter(e.target.value)}
             className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2 bg-white text-novis-anthracite focus:outline-none focus:ring-1 focus:ring-novis-bronze"
           >
-            <option value="ALL">Tümü (Satılık & Kiralık)</option>
+            <option value="ALL">Tümü</option>
             <option value="SALE">Satılık</option>
             <option value="RENT">Kiralık</option>
+            <option value="SOLD">Satıldı</option>
+            <option value="RENTED">Kiralandı</option>
           </select>
         </div>
 
@@ -285,12 +295,20 @@ function Properties() {
                       className="hover:bg-gray-50/50 transition"
                     >
                       <td className="py-4 px-6">
-                        <div className="h-12 w-16 rounded-lg bg-novis-cream flex items-center justify-center text-lg border border-novis-bronze/20">
-                          {property.property_type === "LAND"
-                            ? "🌳"
-                            : property.property_type === "COMMERCIAL"
-                              ? "🏪"
-                              : "🏠"}
+                        <div className="h-12 w-16 rounded-lg bg-novis-cream flex items-center justify-center text-lg border border-novis-bronze/20 overflow-hidden">
+                          {property.cover_image ? (
+                            <img
+                              src={property.cover_image}
+                              alt={property.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : property.property_type === "LAND" ? (
+                            "🌳"
+                          ) : property.property_type === "COMMERCIAL" ? (
+                            "🏪"
+                          ) : (
+                            "🏠"
+                          )}
                         </div>
                       </td>
                       <td className="py-4 px-6 font-medium text-novis-anthracite max-w-xs truncate">
@@ -410,7 +428,7 @@ function Properties() {
                   value={transactionNotes}
                   onChange={(e) => setTransactionNotes(e.target.value)}
                   placeholder="Örn: Kapora alındı, tapu devri tamamlandı..."
-                  className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2 bg-white text-novis-anthracite focus:outline-none focus:ring-1 focus:ring-novis-bronze"
+                  className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2 bg-white text-novis-anthracite focus:border-novis-bronze focus:outline-none focus:ring-1 focus:ring-novis-bronze transition text-sm"
                   rows="3"
                 />
               </div>

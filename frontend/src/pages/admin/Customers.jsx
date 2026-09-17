@@ -536,7 +536,7 @@ export default function Customers() {
                       <td className="p-4 text-xs font-medium text-novis-anthracite">
                         {customer.property_id ? (
                           <Link
-                            to={`/admin/ilanlar/duzenle/${customer.property_id}`}
+                            to={`/admin/ilanlar/${customer.property_id}/duzenle`}
                             className="inline-flex items-center gap-1.5 bg-novis-cream/60 hover:bg-novis-cream text-novis-anthracite hover:text-novis-gold px-2.5 py-1.5 rounded-lg border border-novis-bronze/20 transition group max-w-[200px]"
                             title={customer.property_title || `İlan #${customer.property_id}`}
                           >

@@ -194,7 +194,7 @@ export default function ContactRequests() {
                       <td className="p-4 text-xs font-medium text-novis-anthracite">
                         {req.property_id ? (
                           <Link
-                            to={`/admin/ilanlar/duzenle/${req.property_id}`}
+                            to={`/admin/ilanlar/${req.property_id}/duzenle`}
                             className="inline-flex items-center gap-1.5 bg-novis-cream/60 hover:bg-novis-cream text-novis-anthracite hover:text-novis-gold px-2.5 py-1.5 rounded-lg border border-novis-bronze/20 transition group"
                             title="İlanı Yönet / Düzenle"
                           >

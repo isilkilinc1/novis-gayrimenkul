@@ -24,10 +24,18 @@ const buildFilters = ({ search, transactionType, propertyType, fromDate, toDate,
 
 const selectTransactions = (whereClause, orderBy) => `
   SELECT pt.id, pt.property_id, pt.customer_id, pt.transaction_type, pt.transaction_date, pt.final_price, pt.notes, pt.created_at,
-    p.title AS property_title, p.property_type, p.listing_type AS property_listing_type, p.city AS property_city, p.district AS property_district, p.neighborhood AS property_neighborhood, p.address AS property_address,
+    p.title AS property_title, p.property_type, p.listing_type AS property_listing_type, p.price AS property_original_price,
+    p.city AS property_city, p.district AS property_district, p.neighborhood AS property_neighborhood, p.address AS property_address,
+    p.rooms AS property_rooms, p.square_meters AS property_square_meters, p.floor AS property_floor, p.building_age AS property_building_age,
+    p.status AS property_status,
+    COALESCE(pi_cover.image_url, pi_first.image_url) AS property_cover_image,
     c.full_name AS customer_name, c.phone AS customer_phone, c.email AS customer_email
   FROM property_transactions pt
   LEFT JOIN properties p ON p.id = pt.property_id
+  LEFT JOIN property_images pi_cover ON pi_cover.property_id = p.id AND pi_cover.is_cover = TRUE
+  LEFT JOIN LATERAL (
+    SELECT image_url FROM property_images WHERE property_id = p.id ORDER BY display_order ASC, id ASC LIMIT 1
+  ) pi_first ON TRUE
   LEFT JOIN customers c ON c.id = pt.customer_id
   ${whereClause}
   ORDER BY ${orderBy}

@@ -21,9 +21,18 @@ if (isCloudinaryConfigured) {
 const storage = isCloudinaryConfigured
   ? new CloudinaryStorage({
       cloudinary,
-      params: {
-        folder: "novis-gayrimenkul/properties",
-        allowed_formats: ["jpg", "jpeg", "png", "webp"],
+      params: async (req, file) => {
+        const isVideo =
+          file.mimetype.startsWith("video/") ||
+          /\.(mp4|webm|mov|avi|mkv)$/i.test(file.originalname);
+
+        return {
+          folder: "novis-gayrimenkul/properties",
+          resource_type: isVideo ? "video" : "image",
+          allowed_formats: isVideo
+            ? ["mp4", "webm", "mov", "avi", "mkv"]
+            : ["jpg", "jpeg", "png", "webp"],
+        };
       },
     })
   : multer.diskStorage({
@@ -43,25 +52,28 @@ const storage = isCloudinaryConfigured
       filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
         const ext = path.extname(file.originalname);
-        cb(null, `img-${uniqueSuffix}${ext}`);
+        cb(null, `media-${uniqueSuffix}${ext}`);
       },
     });
 
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|webp/;
+  const allowedImageExt = /jpeg|jpg|png|webp/i;
+  const allowedVideoExt = /mp4|webm|mov|avi|mkv/i;
+  const ext = path.extname(file.originalname).toLowerCase().replace(".", "");
 
-  const extname = allowedTypes.test(
-    path.extname(file.originalname).toLowerCase(),
-  );
+  const isImage =
+    allowedImageExt.test(ext) || file.mimetype.startsWith("image/");
+  const isVideo =
+    allowedVideoExt.test(ext) || file.mimetype.startsWith("video/");
 
-  const mimetype = allowedTypes.test(file.mimetype);
-
-  if (extname && mimetype) {
+  if (isImage || isVideo) {
     return cb(null, true);
   }
 
   cb(
-    new Error("Yalnızca resim dosyaları (jpg, jpeg, png, webp) yüklenebilir!"),
+    new Error(
+      "Yalnızca resim (jpg, jpeg, png, webp) veya video (mp4, webm, mov, avi, mkv) dosyaları yüklenebilir!",
+    ),
     false,
   );
 };
@@ -69,7 +81,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024,
+    fileSize: 100 * 1024 * 1024, // 100 MB max for videos
   },
   fileFilter,
 });

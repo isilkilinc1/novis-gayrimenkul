@@ -19,7 +19,11 @@ class PropertyImageService {
     cloudinaryPublicId = null,
     isCover = false,
     displayOrder = 0,
+    mediaType = "image",
   ) {
+    // Videolar kapak fotoğrafı olamaz
+    const safeIsCover = mediaType === "video" ? false : Boolean(isCover);
+
     const query = `
       INSERT INTO property_images
       (
@@ -27,9 +31,10 @@ class PropertyImageService {
         image_url,
         cloudinary_public_id,
         is_cover,
-        display_order
+        display_order,
+        media_type
       )
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;
     `;
 
@@ -37,8 +42,9 @@ class PropertyImageService {
       propertyId,
       imageUrl,
       cloudinaryPublicId,
-      isCover,
+      safeIsCover,
       displayOrder,
+      mediaType,
     ]);
 
     return result.rows[0];
@@ -73,13 +79,14 @@ class PropertyImageService {
       const deletedImage = deleteResult.rows[0];
 
       // Eğer silinen fotoğraf kapak fotoğrafıysa ve ilanın başka fotoğrafları varsa,
-      // ilk sıradaki fotoğrafı otomatik kapak yap
+      // yalnızca fotoğraf (image) olan ilk sıradaki görseli otomatik kapak yap
       if (deletedImage && deletedImage.is_cover) {
         const remainingImages = await client.query(
           `
           SELECT id
           FROM property_images
           WHERE property_id = $1
+            AND (media_type IS NULL OR media_type = 'image')
           ORDER BY display_order ASC, id ASC
           LIMIT 1;
           `,
@@ -113,6 +120,27 @@ class PropertyImageService {
 
     try {
       await client.query("BEGIN");
+
+      // Önce hedeflenen görselin fotoğraf (image) olduğunu doğrula
+      const targetCheck = await client.query(
+        `
+        SELECT *
+        FROM property_images
+        WHERE id = $1
+          AND property_id = $2;
+        `,
+        [imageId, propertyId],
+      );
+
+      if (targetCheck.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return null;
+      }
+
+      if (targetCheck.rows[0].media_type === "video") {
+        await client.query("ROLLBACK");
+        throw new Error("Video dosyaları kapak fotoğrafı olarak seçilemez.");
+      }
 
       await client.query(
         `

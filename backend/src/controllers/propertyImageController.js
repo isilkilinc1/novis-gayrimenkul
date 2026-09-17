@@ -56,7 +56,7 @@ class PropertyImageController {
     }
   }
 
-  // Fotoğraf yükle
+  // Medya yükle (Fotoğraf & Video)
   static async uploadImages(req, res, next) {
     try {
       const { propertyId } = req.params;
@@ -72,18 +72,35 @@ class PropertyImageController {
       if (!req.files || req.files.length === 0) {
         return res.status(400).json({
           success: false,
-          message: "Lütfen en az bir fotoğraf seçin.",
+          message: "Lütfen en az bir dosya seçin.",
         });
       }
 
       const existingImages =
         await PropertyImageService.getImagesByPropertyId(numericPropertyId);
 
-      const isFirstImage = existingImages.length === 0;
+      const hasExistingCover = existingImages.some(
+        (img) => img.is_cover && img.media_type !== "video",
+      );
+
+      const coverIndex =
+        req.body.coverIndex !== undefined && req.body.coverIndex !== ""
+          ? Number(req.body.coverIndex)
+          : null;
+
+      const coverFileName = req.body.coverFileName || null;
+
+      let coverAssignedInBatch = false;
       const savedImages = [];
 
       for (let i = 0; i < req.files.length; i++) {
         const file = req.files[i];
+
+        const isVideo =
+          file.mimetype.startsWith("video/") ||
+          /\.(mp4|webm|mov|avi|mkv)$/i.test(file.originalname);
+
+        const mediaType = isVideo ? "video" : "image";
 
         // Cloudinary veya Local URL
         const imageUrl = file.path?.startsWith("http")
@@ -95,8 +112,20 @@ class PropertyImageController {
           ? file.filename
           : null;
 
-        // İlk fotoğraf otomatik kapak
-        const isCover = isFirstImage && i === 0;
+        // Kapak fotoğrafı mantığı (Videolar asla kapak olamaz)
+        let isCover = false;
+        if (!isVideo) {
+          if (coverIndex !== null && coverIndex === i) {
+            isCover = true;
+            coverAssignedInBatch = true;
+          } else if (coverFileName && file.originalname === coverFileName) {
+            isCover = true;
+            coverAssignedInBatch = true;
+          } else if (!hasExistingCover && !coverAssignedInBatch) {
+            isCover = true;
+            coverAssignedInBatch = true;
+          }
+        }
 
         const displayOrder = existingImages.length + i + 1;
 
@@ -106,6 +135,7 @@ class PropertyImageController {
           cloudinaryPublicId,
           isCover,
           displayOrder,
+          mediaType,
         );
 
         savedImages.push(newImage);
@@ -113,16 +143,22 @@ class PropertyImageController {
 
       res.status(201).json({
         success: true,
-        message: "Fotoğraflar başarıyla yüklendi.",
+        message: "Medyalar başarıyla yüklendi.",
         data: savedImages,
       });
     } catch (error) {
-      // Yükleme sırasında hata olursa Cloudinary'e yüklenmiş geçici görselleri temizle
+      // Yükleme sırasında hata olursa Cloudinary'e yüklenmiş geçici medyaları temizle
       if (req.files && req.files.length > 0) {
         for (const file of req.files) {
           if (file.path?.startsWith("http") && file.filename) {
+            const isVideo =
+              file.mimetype.startsWith("video/") ||
+              /\.(mp4|webm|mov|avi|mkv)$/i.test(file.originalname);
+
             try {
-              await cloudinary.uploader.destroy(file.filename);
+              await cloudinary.uploader.destroy(file.filename, {
+                resource_type: isVideo ? "video" : "image",
+              });
             } catch (cleanupErr) {
               console.error("Geçici dosya temizleme hatası:", cleanupErr.message);
             }
@@ -133,7 +169,7 @@ class PropertyImageController {
     }
   }
 
-  // Fotoğraf sil
+  // Medya sil (Fotoğraf / Video)
   static async deleteImage(req, res, next) {
     try {
       const { imageId } = req.params;
@@ -142,7 +178,7 @@ class PropertyImageController {
       if (!numericImageId || isNaN(numericImageId)) {
         return res.status(400).json({
           success: false,
-          message: "Geçersiz fotoğraf ID'si.",
+          message: "Geçersiz medya ID'si.",
         });
       }
 
@@ -151,14 +187,19 @@ class PropertyImageController {
       if (!image) {
         return res.status(404).json({
           success: false,
-          message: "Fotoğraf bulunamadı.",
+          message: "Medya bulunamadı.",
         });
       }
 
-      // Cloudinary fotoğraflarını silmeyi dene
+      const isVideo = image.media_type === "video";
+      const resourceType = isVideo ? "video" : "image";
+
+      // Cloudinary dosyalarını silmeyi dene
       if (image.cloudinary_public_id) {
         try {
-          await cloudinary.uploader.destroy(image.cloudinary_public_id);
+          await cloudinary.uploader.destroy(image.cloudinary_public_id, {
+            resource_type: resourceType,
+          });
         } catch (cloudErr) {
           console.warn("Cloudinary public_id silme uyarısı:", cloudErr.message);
         }
@@ -166,13 +207,15 @@ class PropertyImageController {
         const publicId = getCloudinaryPublicIdFromUrl(image.image_url);
         if (publicId) {
           try {
-            await cloudinary.uploader.destroy(publicId);
+            await cloudinary.uploader.destroy(publicId, {
+              resource_type: resourceType,
+            });
           } catch (cloudErr) {
             console.warn("Cloudinary URL publicId silme uyarısı:", cloudErr.message);
           }
         }
       }
-      // Eski lokal fotoğraflar için geriye dönük destek
+      // Eski lokal dosyalar için geriye dönük destek
       else if (image.image_url?.startsWith("/uploads/")) {
         try {
           const filePath = path.join(__dirname, "../..", image.image_url);
@@ -189,7 +232,7 @@ class PropertyImageController {
 
       res.json({
         success: true,
-        message: "Fotoğraf başarıyla silindi.",
+        message: "Medya başarıyla silindi.",
       });
     } catch (error) {
       next(error);

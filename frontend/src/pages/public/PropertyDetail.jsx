@@ -104,10 +104,22 @@ function PropertyDetail() {
     RENT: "Kiralık",
   };
 
+  // Medyaları fotoğraf ve video olarak ayır
+  const photos = images.filter(
+    (img) =>
+      img.media_type !== "video" &&
+      !img.image_url?.match(/\.(mp4|webm|mov|avi|mkv)$/i),
+  );
+  const videos = images.filter(
+    (img) =>
+      img.media_type === "video" ||
+      Boolean(img.image_url?.match(/\.(mp4|webm|mov|avi|mkv)$/i)),
+  );
+
   // Aktif gösterilecek ana fotoğraf URL'i (yoksa yedek placeholder)
   const currentImage =
-    images.length > 0
-      ? getFullImageUrl(images[activeImageIndex].image_url)
+    photos.length > 0
+      ? getFullImageUrl(photos[activeImageIndex]?.image_url || photos[0]?.image_url)
       : "/images/property-placeholder.jpg";
 
   return (
@@ -153,24 +165,26 @@ function PropertyDetail() {
             {/* Büyük Ana Fotoğraf / Lightbox Tetikleyicisi */}
             <div
               className="relative h-72 sm:h-96 rounded-xl overflow-hidden bg-novis-bronze/10 border border-novis-bronze/20 cursor-pointer group"
-              onClick={() => setLightboxOpen(true)}
+              onClick={() => photos.length > 0 && setLightboxOpen(true)}
             >
               <img
                 src={currentImage}
                 alt={property.title}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
               />
-              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="bg-black/70 text-white text-xs px-4 py-2 rounded-lg font-medium backdrop-blur-xs shadow-sm">
-                  🔍 Büyük Boyutta Görüntüle
-                </span>
-              </div>
+              {photos.length > 0 && (
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="bg-black/70 text-white text-xs px-4 py-2 rounded-lg font-medium backdrop-blur-xs shadow-sm">
+                    🔍 Büyük Boyutta Görüntüle
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Küçük Galeri Küçük Resimleri (Thumbnails) */}
-            {images.length > 1 && (
+            {photos.length > 1 && (
               <div className="flex gap-3 overflow-x-auto pb-2">
-                {images.map((img, index) => (
+                {photos.map((img, index) => (
                   <button
                     key={img.id}
                     type="button"
@@ -191,6 +205,37 @@ function PropertyDetail() {
               </div>
             )}
           </div>
+
+          {/* 🎬 VİDEO VE TANITIM ALANI */}
+          {videos.length > 0 && (
+            <div className="bg-white p-6 sm:p-8 rounded-2xl border border-novis-bronze/20 shadow-sm space-y-4">
+              <h2 className="font-display text-xl font-bold text-novis-anthracite flex items-center gap-2">
+                <span>🎬 İlan Tanıtım / Tur Videosu</span>
+                <span className="text-xs bg-purple-100 text-purple-800 font-semibold px-2.5 py-0.5 rounded-full">
+                  {videos.length} Video
+                </span>
+              </h2>
+
+              <div className="grid grid-cols-1 gap-6">
+                {videos.map((vid) => (
+                  <div
+                    key={vid.id}
+                    className="rounded-xl overflow-hidden bg-black border border-gray-200 shadow-sm"
+                  >
+                    <video
+                      src={getFullImageUrl(vid.image_url)}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      className="w-full max-h-[500px] object-contain bg-black"
+                    >
+                      Tarayıcınız video oynatmayı desteklemiyor.
+                    </video>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Gayrimenkul Türüne Göre Dinamik Özellikler Alanı */}
           <div className="bg-white p-6 sm:p-8 rounded-2xl border border-novis-bronze/20 shadow-sm">
@@ -380,7 +425,7 @@ function PropertyDetail() {
         </div>
 
         {/* 🔍 LIGHTBOX (BÜYÜK FOTOĞRAF MODALI) */}
-        {lightboxOpen && (
+        {lightboxOpen && photos.length > 0 && (
           <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-xs">
             <button
               type="button"
@@ -397,13 +442,13 @@ function PropertyDetail() {
                 className="max-h-[80vh] max-w-full object-contain rounded-lg shadow-2xl"
               />
 
-              {images.length > 1 && (
+              {photos.length > 1 && (
                 <>
                   <button
                     type="button"
                     onClick={() =>
                       setActiveImageIndex((prev) =>
-                        prev === 0 ? images.length - 1 : prev - 1,
+                        prev === 0 ? photos.length - 1 : prev - 1,
                       )
                     }
                     className="absolute left-4 text-white bg-black/60 hover:bg-black p-3 rounded-full transition shadow-md"
@@ -414,7 +459,7 @@ function PropertyDetail() {
                     type="button"
                     onClick={() =>
                       setActiveImageIndex((prev) =>
-                        prev === images.length - 1 ? 0 : prev + 1,
+                        prev === photos.length - 1 ? 0 : prev + 1,
                       )
                     }
                     className="absolute right-4 text-white bg-black/60 hover:bg-black p-3 rounded-full transition shadow-md"

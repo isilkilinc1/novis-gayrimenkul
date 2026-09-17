@@ -15,7 +15,7 @@ export default function PropertyImageManager({ propertyId }) {
   const [error, setError] = useState("");
 
   // ======================================================
-  // FOTOĞRAFLARI GETİR
+  // MEDYALARI (FOTOĞRAF VE VİDEO) GETİR
   // ======================================================
 
   useEffect(() => {
@@ -36,12 +36,12 @@ export default function PropertyImageManager({ propertyId }) {
           setImages(Array.isArray(data) ? data : []);
         }
       } catch (err) {
-        console.error("Fotoğrafları getirme hatası:", err);
+        console.error("Medyaları getirme hatası:", err);
 
         if (!cancelled) {
           setError(
             err.response?.data?.message ||
-              "Fotoğraflar yüklenirken bir hata oluştu.",
+              "Medyalar yüklenirken bir hata oluştu.",
           );
         }
       } finally {
@@ -59,7 +59,7 @@ export default function PropertyImageManager({ propertyId }) {
   }, [propertyId]);
 
   // ======================================================
-  // FOTOĞRAF YÜKLE
+  // MEDYA (FOTOĞRAF / VİDEO) YÜKLE
   // ======================================================
 
   const handleFileChange = async (e) => {
@@ -81,16 +81,16 @@ export default function PropertyImageManager({ propertyId }) {
 
       await uploadPropertyImages(propertyId, formData);
 
-      // Yükleme tamamlandıktan sonra fotoğrafları yeniden getir
+      // Yükleme tamamlandıktan sonra medyaları yeniden getir
       const data = await getPropertyImages(propertyId);
 
       setImages(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Fotoğraf yükleme hatası:", err);
+      console.error("Medya yükleme hatası:", err);
 
       setError(
         err.response?.data?.message ||
-          "Fotoğraflar yüklenirken bir hata oluştu.",
+          "Medyalar yüklenirken bir hata oluştu.",
       );
     } finally {
       setUploading(false);
@@ -101,12 +101,18 @@ export default function PropertyImageManager({ propertyId }) {
   };
 
   // ======================================================
-  // FOTOĞRAF SİL
+  // MEDYA SİL
   // ======================================================
 
-  const handleDelete = async (imageId) => {
+  const handleDelete = async (mediaItem) => {
+    const isVideo =
+      mediaItem.media_type === "video" ||
+      Boolean(mediaItem.image_url?.match(/\.(mp4|webm|mov|avi|mkv)$/i));
+
     const confirmed = window.confirm(
-      "Bu fotoğrafı silmek istediğinize emin misiniz?",
+      isVideo
+        ? "Bu videoyu silmek istediğinize emin misiniz?"
+        : "Bu fotoğrafı silmek istediğinize emin misiniz?",
     );
 
     if (!confirmed) {
@@ -116,23 +122,22 @@ export default function PropertyImageManager({ propertyId }) {
     try {
       setError("");
 
-      await deletePropertyImage(propertyId, imageId);
+      await deletePropertyImage(propertyId, mediaItem.id);
 
-      // State'i fonksiyonel olarak güncelle
-      setImages((currentImages) =>
-        currentImages.filter((img) => img.id !== imageId),
-      );
+      // Silindikten sonra güncel listeyi yeniden çekelim (eğer kapak silindiyse yeni kapak backend tarafından atanmış olur)
+      const data = await getPropertyImages(propertyId);
+      setImages(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Fotoğraf silme hatası:", err);
+      console.error("Medya silme hatası:", err);
 
       setError(
-        err.response?.data?.message || "Fotoğraf silinirken bir hata oluştu.",
+        err.response?.data?.message || "Medya silinirken bir hata oluştu.",
       );
     }
   };
 
   // ======================================================
-  // KAPAK FOTOĞRAFI YAP
+  // KAPAK FOTOĞRAFI YAP (SADECE FOTOĞRAFLAR)
   // ======================================================
 
   const handleSetCover = async (imageId) => {
@@ -162,26 +167,34 @@ export default function PropertyImageManager({ propertyId }) {
   // RENDER
   // ======================================================
 
+  const photoCount = images.filter((m) => m.media_type !== "video").length;
+  const videoCount = images.filter((m) => m.media_type === "video").length;
+
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 my-6">
       {/* BAŞLIK */}
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">
-          İlan Fotoğrafları
-        </h3>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800">
+            İlan Medyaları (Fotoğraf & Video)
+          </h3>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Mevcut: {photoCount} Fotoğraf, {videoCount} Video. Kapak fotoğrafı yalnızca fotoğraflardan seçilebilir.
+          </p>
+        </div>
 
-        {/* FOTOĞRAF YÜKLE */}
+        {/* MEDYA YÜKLE */}
         <label
-          className={`cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${
+          className={`cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 self-start sm:self-auto ${
             uploading ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
-          <span>{uploading ? "Yükleniyor..." : "+ Fotoğraf Yükle"}</span>
+          <span>{uploading ? "Yükleniyor..." : "+ Medya Yükle"}</span>
 
           <input
             type="file"
             multiple
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime,video/x-matroska,video/x-msvideo"
             className="hidden"
             onChange={handleFileChange}
             disabled={uploading}
@@ -198,64 +211,98 @@ export default function PropertyImageManager({ propertyId }) {
 
       {/* YÜKLENİYOR */}
       {loading ? (
-        <p className="text-gray-500 text-sm">Fotoğraflar yükleniyor...</p>
+        <p className="text-gray-500 text-sm">Medyalar yükleniyor...</p>
       ) : images.length === 0 ? (
-        /* FOTOĞRAF YOK */
+        /* MEDYA YOK */
         <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg">
           <p className="text-gray-400 text-sm">
-            Bu ilana henüz fotoğraf yüklenmemiş.
+            Bu ilana henüz fotoğraf veya video yüklenmemiş.
           </p>
         </div>
       ) : (
-        /* FOTOĞRAFLAR */
+        /* MEDYALAR GRID */
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {images.map((img) => (
-            <div
-              key={img.id}
-              className="relative group border border-gray-200 rounded-lg overflow-hidden bg-gray-50 shadow-sm"
-            >
-              {/* FOTOĞRAF */}
-              <div className="relative">
-                <img
-                  src={getFullImageUrl(img.image_url)}
-                  alt="İlan Görseli"
-                  className="w-full h-32 object-cover"
-                />
+          {images.map((img) => {
+            const isVideo =
+              img.media_type === "video" ||
+              Boolean(img.image_url?.match(/\.(mp4|webm|mov|avi|mkv)$/i));
 
-                {/* KAPAK ROZETİ */}
-                {img.is_cover && (
-                  <span className="absolute top-2 left-2 bg-amber-500 text-white text-xs px-2 py-1 rounded-md font-medium shadow">
-                    ⭐ Kapak
-                  </span>
-                )}
-              </div>
+            return (
+              <div
+                key={img.id}
+                className={`relative group border rounded-lg overflow-hidden bg-gray-50 shadow-sm ${
+                  img.is_cover ? "border-amber-500 ring-2 ring-amber-400/40" : "border-gray-200"
+                }`}
+              >
+                {/* MEDYA ALANI */}
+                <div className="relative h-32 w-full bg-black flex items-center justify-center">
+                  {isVideo ? (
+                    <video
+                      src={getFullImageUrl(img.image_url)}
+                      controls
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <img
+                      src={getFullImageUrl(img.image_url)}
+                      alt="İlan Görseli"
+                      className="w-full h-full object-cover"
+                    />
+                  )}
 
-              {/* AKSİYONLAR */}
-              <div className="p-2 flex justify-between items-center bg-white border-t border-gray-100">
-                {!img.is_cover ? (
+                  {/* ROZETLER */}
+                  <div className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none">
+                    {isVideo ? (
+                      <span className="bg-purple-700 text-white text-[10px] px-2 py-0.5 rounded font-semibold shadow">
+                        🎬 Video
+                      </span>
+                    ) : (
+                      <span className="bg-blue-700 text-white text-[10px] px-2 py-0.5 rounded font-semibold shadow">
+                        📷 Fotoğraf
+                      </span>
+                    )}
+
+                    {img.is_cover && (
+                      <span className="bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded font-medium shadow">
+                        ⭐ Kapak
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* AKSİYONLAR */}
+                <div className="p-2 flex justify-between items-center bg-white border-t border-gray-100">
+                  {!isVideo ? (
+                    !img.is_cover ? (
+                      <button
+                        type="button"
+                        onClick={() => handleSetCover(img.id)}
+                        className="text-xs text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                      >
+                        Kapak Yap
+                      </button>
+                    ) : (
+                      <span className="text-xs text-amber-600 font-semibold">
+                        Kapak Fotoğrafı
+                      </span>
+                    )
+                  ) : (
+                    <span className="text-xs text-gray-400 font-medium italic">
+                      Video
+                    </span>
+                  )}
+
                   <button
                     type="button"
-                    onClick={() => handleSetCover(img.id)}
-                    className="text-xs text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                    onClick={() => handleDelete(img)}
+                    className="text-xs text-red-500 hover:text-red-700 font-medium"
                   >
-                    Kapak Yap
+                    Sil
                   </button>
-                ) : (
-                  <span className="text-xs text-gray-400 font-medium">
-                    Kapak Fotoğrafı
-                  </span>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => handleDelete(img.id)}
-                  className="text-xs text-red-500 hover:text-red-700 font-medium"
-                >
-                  Sil
-                </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

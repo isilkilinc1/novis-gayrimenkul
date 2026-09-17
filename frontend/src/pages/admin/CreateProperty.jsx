@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   createProperty,
@@ -11,11 +11,28 @@ import AdminPropertyMap from "../../components/AdminPropertyMap";
 
 function CreateProperty() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Fotoğraf state'leri
-  const [selectedFiles, setSelectedFiles] = useState([]);
+  // Fotoğraf ve Video Medya state'i: { id, file, previewUrl, isVideo, isCover, name }
+  const [mediaFiles, setMediaFiles] = useState([]);
+
+  // Preview URL'leri unmount durumunda temizle
+  const mediaFilesRef = useRef(mediaFiles);
+  useEffect(() => {
+    mediaFilesRef.current = mediaFiles;
+  }, [mediaFiles]);
+
+  useEffect(() => {
+    return () => {
+      mediaFilesRef.current.forEach((item) => {
+        if (item.previewUrl) {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+      });
+    };
+  }, []);
 
   const [formData, setFormData] = useState({
     property_type: "HOUSE",
@@ -82,10 +99,102 @@ function CreateProperty() {
     }));
   };
 
-  // Dosya seçim fonksiyonu
+  // Medya dosyaları ekleme fonksiyonu
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    setSelectedFiles(files);
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const newItems = files.map((file) => {
+      const isVideo =
+        file.type.startsWith("video/") ||
+        Boolean(file.name.match(/\.(mp4|webm|mov|avi|mkv)$/i));
+      return {
+        id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        file,
+        previewUrl: URL.createObjectURL(file),
+        isVideo,
+        isCover: false,
+        name: file.name,
+      };
+    });
+
+    setMediaFiles((prev) => {
+      const combined = [...prev, ...newItems];
+      // Eğer mevcut listede hiç kapak seçili fotoğraf yoksa, ilk fotoğrafı kapak yap (videolar kapak olamaz)
+      const hasCoverPhoto = combined.some((item) => !item.isVideo && item.isCover);
+      if (!hasCoverPhoto) {
+        const firstPhotoIndex = combined.findIndex((item) => !item.isVideo);
+        if (firstPhotoIndex !== -1) {
+          combined[firstPhotoIndex].isCover = true;
+        }
+      }
+      return combined;
+    });
+
+    // Input alanını sıfırla ki aynı dosya tekrar seçilebilsin
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Medya öğesini silme
+  const handleRemoveMedia = (idToRemove) => {
+    setMediaFiles((prev) => {
+      const target = prev.find((item) => item.id === idToRemove);
+      if (target?.previewUrl) {
+        URL.revokeObjectURL(target.previewUrl);
+      }
+      const filtered = prev.filter((item) => item.id !== idToRemove);
+
+      // Eğer silinen öğe kapak fotoğrafıysa ve geriye başka fotoğraf kaldıysa ilk fotoğrafı kapak yap
+      const hasCover = filtered.some((item) => !item.isVideo && item.isCover);
+      if (!hasCover) {
+        const firstPhotoIndex = filtered.findIndex((item) => !item.isVideo);
+        if (firstPhotoIndex !== -1) {
+          filtered[firstPhotoIndex].isCover = true;
+        }
+      }
+      return filtered;
+    });
+  };
+
+  // Kapak fotoğrafı seçme (Sadece fotoğraflar için)
+  const handleSelectCover = (id) => {
+    setMediaFiles((prev) =>
+      prev.map((item) => {
+        if (item.isVideo) {
+          return { ...item, isCover: false };
+        }
+        return {
+          ...item,
+          isCover: item.id === id,
+        };
+      }),
+    );
+  };
+
+  // Sıralama değiştirme (sol / yukarı)
+  const handleMoveLeft = (index) => {
+    if (index === 0) return;
+    setMediaFiles((prev) => {
+      const next = [...prev];
+      const temp = next[index - 1];
+      next[index - 1] = next[index];
+      next[index] = temp;
+      return next;
+    });
+  };
+
+  // Sıralama değiştirme (sağ / aşağı)
+  const handleMoveRight = (index) => {
+    setMediaFiles((prev) => {
+      if (index >= prev.length - 1) return prev;
+      const next = [...prev];
+      const temp = next[index + 1];
+      next[index + 1] = next[index];
+      next[index] = temp;
+      return next;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -112,12 +221,30 @@ function CreateProperty() {
       const newProperty = await createProperty(payload);
       const newPropertyId = newProperty.id;
 
-      // 2. Eğer kullanıcı fotoğraf seçtiyse, yeni oluşan ilan ID'sine fotoğrafları yükle
-      if (selectedFiles.length > 0 && newPropertyId) {
+      // 2. Eğer kullanıcı medya (fotoğraf/video) seçtiyse, yeni oluşan ilan ID'sine yükle
+      if (mediaFiles.length > 0 && newPropertyId) {
         const formDataImages = new FormData();
-        selectedFiles.forEach((file) => {
-          formDataImages.append("images", file);
+        let coverIndex = -1;
+
+        mediaFiles.forEach((item, index) => {
+          formDataImages.append("images", item.file);
+          if (!item.isVideo && item.isCover) {
+            coverIndex = index;
+          }
         });
+
+        // Eğer açıkça kapak seçilmemişse ama fotoğraf varsa, ilk fotoğrafın indeksini gönder
+        if (coverIndex === -1) {
+          coverIndex = mediaFiles.findIndex((item) => !item.isVideo);
+        }
+
+        if (coverIndex !== -1) {
+          formDataImages.append("coverIndex", coverIndex.toString());
+          if (mediaFiles[coverIndex]) {
+            formDataImages.append("coverFileName", mediaFiles[coverIndex].file.name);
+          }
+        }
+
         await uploadPropertyImages(newPropertyId, formDataImages);
       }
 
@@ -126,12 +253,15 @@ function CreateProperty() {
       console.error("İlan oluşturma hatası:", err);
       setError(
         err.response?.data?.message ||
-          "İlan oluşturulurken veya fotoğraflar yüklenirken bir hata oluştu.",
+          "İlan oluşturulurken veya medyalar yüklenirken bir hata oluştu.",
       );
     } finally {
       setLoading(false);
     }
   };
+
+  const photoCount = mediaFiles.filter((m) => !m.isVideo).length;
+  const videoCount = mediaFiles.filter((m) => m.isVideo).length;
 
   return (
     <Container>
@@ -142,7 +272,7 @@ function CreateProperty() {
               Yeni İlan Ekle
             </h1>
             <p className="mt-1 text-sm text-novis-brown">
-              Sisteme yeni bir gayrimenkul ilanı kaydetmek ve fotoğraf eklemek
+              Sisteme yeni bir gayrimenkul ilanı kaydetmek, fotoğraf ve video eklemek
               için formu doldurun.
             </p>
           </div>
@@ -383,26 +513,165 @@ function CreateProperty() {
             </>
           )}
 
-          {/* İlan Fotoğraf Yükleme Alanı */}
-          <div className="pt-4 border-t border-gray-100">
-            <label className="block text-sm font-bold text-novis-anthracite mb-2">
-              İlan Fotoğrafları (İsteğe Bağlı)
-            </label>
-            <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center bg-gray-50">
-              <input
-                type="file"
-                multiple
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleFileChange}
-                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-novis-anthracite file:text-white hover:file:bg-black cursor-pointer"
-              />
-              {selectedFiles.length > 0 && (
-                <p className="mt-2 text-xs text-novis-bronze font-medium">
-                  ✓ {selectedFiles.length} fotoğraf seçildi. İlk yüklenen kapak
-                  fotoğrafı olacaktır.
+          {/* 📸 FOTOĞRAF VE VİDEO YÜKLEME ALANI */}
+          <div className="pt-4 border-t border-gray-100 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-sm font-bold text-novis-anthracite">
+                  İlan Medyaları (Fotoğraf & Video)
+                </label>
+                <p className="text-xs text-novis-brown mt-0.5">
+                  Birden fazla fotoğraf ve video seçebilirsiniz. Fotoğraflardan birini kapak fotoğrafı olarak belirleyebilirsiniz (videolar kapak fotoğrafı olamaz).
                 </p>
-              )}
+              </div>
+              <label
+                className="cursor-pointer bg-novis-anthracite hover:bg-black text-white px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition shrink-0"
+              >
+                <span>+ Medya Seç</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime,video/x-matroska,video/x-msvideo"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
             </div>
+
+            {/* Önizleme Listesi */}
+            {mediaFiles.length === 0 ? (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-gray-200 hover:border-novis-bronze/50 rounded-xl p-8 text-center bg-gray-50/70 hover:bg-gray-50 cursor-pointer transition"
+              >
+                <div className="text-3xl mb-2">📸 🎬</div>
+                <p className="text-sm font-medium text-novis-anthracite">
+                  Fotoğraf veya video yüklemek için buraya tıklayın ya da dosyaları seçin
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  JPG, PNG, WEBP, MP4, WEBM, MOV formatları desteklenir.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-3 text-xs font-medium text-novis-brown">
+                  <span>
+                    Toplam {mediaFiles.length} medya ({photoCount} Fotoğraf, {videoCount} Video)
+                  </span>
+                  <span>
+                    ⭐ Kapak Fotoğrafı:{" "}
+                    <strong className="text-novis-anthracite">
+                      {mediaFiles.find((m) => !m.isVideo && m.isCover)?.name ||
+                        "Seçilmedi (İlk fotoğraf varsayılan olacaktır)"}
+                    </strong>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {mediaFiles.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className={`relative group rounded-xl overflow-hidden border transition bg-white shadow-xs ${
+                        item.isCover
+                          ? "border-amber-500 ring-2 ring-amber-400/40"
+                          : "border-gray-200"
+                      }`}
+                    >
+                      {/* Medya Önizlemesi */}
+                      <div className="relative h-32 w-full bg-black flex items-center justify-center">
+                        {item.isVideo ? (
+                          <video
+                            src={item.previewUrl}
+                            controls
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <img
+                            src={item.previewUrl}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+
+                        {/* Rozetler */}
+                        <div className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none">
+                          {item.isVideo ? (
+                            <span className="bg-purple-700 text-white text-[10px] font-semibold px-2 py-0.5 rounded shadow">
+                              🎬 Video
+                            </span>
+                          ) : (
+                            <span className="bg-blue-700 text-white text-[10px] font-semibold px-2 py-0.5 rounded shadow">
+                              📷 Fotoğraf
+                            </span>
+                          )}
+
+                          {item.isCover && (
+                            <span className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow flex items-center gap-1">
+                              ⭐ Kapak
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Sil Butonu */}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMedia(item.id)}
+                          className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow transition"
+                          title="Kaldır"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      {/* Alt Kontroller / Sıralama & Kapak Yap */}
+                      <div className="p-2 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-1 text-xs">
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveLeft(index)}
+                            disabled={index === 0}
+                            className="w-6 h-6 rounded bg-white hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-700 transition"
+                            title="Sola taşı"
+                          >
+                            ◀
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveRight(index)}
+                            disabled={index === mediaFiles.length - 1}
+                            className="w-6 h-6 rounded bg-white hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-700 transition"
+                            title="Sağa taşı"
+                          >
+                            ▶
+                          </button>
+                        </div>
+
+                        {!item.isVideo ? (
+                          !item.isCover ? (
+                            <button
+                              type="button"
+                              onClick={() => handleSelectCover(item.id)}
+                              className="text-[11px] font-medium text-amber-700 hover:text-amber-900 hover:underline"
+                            >
+                              Kapak Yap
+                            </button>
+                          ) : (
+                            <span className="text-[11px] font-bold text-amber-600">
+                              Kapak
+                            </span>
+                          )
+                        ) : (
+                          <span className="text-[10px] text-gray-400 italic">
+                            Video
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="pt-4 border-t border-gray-100 flex justify-end">
@@ -413,7 +682,7 @@ function CreateProperty() {
             >
               {loading
                 ? "Kaydediliyor..."
-                : "İlanı Kaydet ve Fotoğrafları Yükle"}
+                : "İlanı Kaydet ve Medyaları Yükle"}
             </Button>
           </div>
         </form>

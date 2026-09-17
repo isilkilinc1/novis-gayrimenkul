@@ -5,12 +5,17 @@ const pool = require("../src/config/database");
 
 async function runMigration() {
   try {
-    const sqlPath = path.join(__dirname, "../database/migration_add_cloudinary_public_id.sql");
-    const sql = fs.readFileSync(sqlPath, "utf-8");
+    const sql1Path = path.join(__dirname, "../database/migration_add_cloudinary_public_id.sql");
+    const sql1 = fs.readFileSync(sql1Path, "utf-8");
+    await pool.query(sql1);
 
-    console.log("Migration başlatılıyor...");
-    await pool.query(sql);
-    console.log("Migration başarıyla uygulandı.");
+    const sql2Path = path.join(__dirname, "../database/migration_add_media_type.sql");
+    if (fs.existsSync(sql2Path)) {
+      const sql2 = fs.readFileSync(sql2Path, "utf-8");
+      await pool.query(sql2);
+    }
+
+    console.log("Migrationlar başarıyla uygulandı.");
 
     // Kontrol et
     const check = await pool.query(`

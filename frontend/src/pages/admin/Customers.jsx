@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import {
   getCustomers,
@@ -11,6 +11,7 @@ import { getAdminProperties } from "../../services/propertyService";
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
+import PropertyDetailsModal from "../../components/PropertyDetailsModal";
 
 export default function Customers() {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ export default function Customers() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedPropertyId, setSelectedPropertyId] = useState(null);
 
   // =========================================================
   // FORM STATE
@@ -535,17 +537,17 @@ export default function Customers() {
 
                       <td className="p-4 text-xs font-medium text-novis-anthracite">
                         {customer.property_id ? (
-                          <Link
-                            to={`/admin/ilanlar/${customer.property_id}/duzenle`}
-                            className="inline-flex items-center gap-1.5 bg-novis-cream/60 hover:bg-novis-cream text-novis-anthracite hover:text-novis-gold px-2.5 py-1.5 rounded-lg border border-novis-bronze/20 transition group max-w-[200px]"
-                            title={customer.property_title || `İlan #${customer.property_id}`}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPropertyId(customer.property_id)}
+                            className="inline-flex items-center gap-1.5 bg-novis-cream/60 hover:bg-novis-cream text-novis-anthracite hover:text-novis-gold px-2.5 py-1.5 rounded-lg border border-novis-bronze/20 transition group max-w-[220px] text-left cursor-pointer"
+                            title="İlgili İlan Detaylarını Görüntüle"
                           >
                             <span>🏢</span>
                             <span className="font-semibold underline decoration-dotted group-hover:decoration-solid truncate">
-                              {customer.property_title || `İlan #${customer.property_id}`}
+                              #{customer.property_id} - {customer.property_title || "İlan Başlığı Yok"}
                             </span>
-                            <span className="text-[10px] text-gray-400 group-hover:text-novis-gold">↗</span>
-                          </Link>
+                          </button>
                         ) : (
                           <span className="text-gray-400">-</span>
                         )}
@@ -882,6 +884,15 @@ export default function Customers() {
               </form>
             </div>
           </div>
+        )}
+        {/* =====================================================
+            İLAN DETAY MODALI
+        ====================================================== */}
+        {selectedPropertyId && (
+          <PropertyDetailsModal
+            propertyId={selectedPropertyId}
+            onClose={() => setSelectedPropertyId(null)}
+          />
         )}
       </div>
     </Container>

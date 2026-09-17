@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import {
   deleteTransaction,
@@ -12,15 +12,10 @@ import { getCustomers } from "../../services/customerService";
 import Container from "../../components/ui/Container";
 import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
+import { PropertyInfoCard } from "../../components/PropertyDetailsModal";
 
 const types = { HOUSE: "Konut", COMMERCIAL: "İşyeri", LAND: "Arsa" };
 const listingTypes = { SALE: "Satılık", RENT: "Kiralık" };
-const statusLabels = {
-  ACTIVE: "Aktif",
-  INACTIVE: "Yayından Kaldırıldı",
-  SOLD: "Satıldı",
-  RENTED: "Kiralandı",
-};
 
 const date = (value) =>
   value
@@ -756,107 +751,7 @@ function Detail({ item, badge, openCustomerHistory, onClose, navigate }) {
       </div>
 
       {/* İLGİLİ İLAN BİLGİLERİ */}
-      <div className="rounded-xl border border-gray-200 p-3.5 bg-white space-y-3">
-        <div className="flex items-center justify-between">
-          <h4 className="font-bold text-xs uppercase tracking-wider text-novis-anthracite">
-            🏢 İlgili İlan Bilgileri
-          </h4>
-          {item.property_id && (
-            <Link
-              to={`/admin/ilanlar/${item.property_id}/duzenle`}
-              className="text-xs font-semibold text-novis-bronze hover:text-novis-gold hover:underline inline-flex items-center gap-1"
-            >
-              İlanı Düzenle ↗
-            </Link>
-          )}
-        </div>
-
-        {item.property_id ? (
-          <div>
-            <div className="flex gap-3 items-start">
-              {item.property_cover_image ? (
-                <img
-                  src={item.property_cover_image}
-                  alt={item.property_title}
-                  className="w-16 h-16 rounded-lg object-cover border border-novis-bronze/20 shrink-0"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-lg bg-novis-cream flex items-center justify-center text-xl border border-novis-bronze/20 shrink-0">
-                  {item.property_type === "LAND"
-                    ? "🌳"
-                    : item.property_type === "COMMERCIAL"
-                      ? "🏪"
-                      : "🏠"}
-                </div>
-              )}
-
-              <div className="flex-1 min-w-0">
-                <Link
-                  to={`/admin/ilanlar/${item.property_id}/duzenle`}
-                  className="font-bold text-novis-anthracite hover:text-novis-gold transition line-clamp-1"
-                >
-                  #{item.property_id} - {item.property_title || "İlan Başlığı Yok"}
-                </Link>
-
-                <div className="text-xs text-novis-brown mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5">
-                  <span className="font-semibold">{types[item.property_type] || "Belirtilmemiş"}</span>
-                  <span>·</span>
-                  <span>{listingTypes[item.property_listing_type] || ""}</span>
-                  {item.property_status && (
-                    <>
-                      <span>·</span>
-                      <span className="text-gray-500">
-                        {statusLabels[item.property_status] || item.property_status}
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                <div className="text-xs text-gray-500 mt-1">
-                  {[item.property_city, item.property_district, item.property_neighborhood]
-                    .filter(Boolean)
-                    .join(" / ") || "Konum bilgisi yok"}
-                </div>
-              </div>
-            </div>
-
-            {/* Ek İlan Detayları */}
-            <div className="mt-3 pt-2.5 border-t border-gray-100 grid grid-cols-2 gap-2 text-xs text-gray-600">
-              {item.property_rooms && (
-                <div>
-                  <span className="text-gray-400">Oda Sayısı:</span>{" "}
-                  <span className="font-semibold text-novis-anthracite">{item.property_rooms}</span>
-                </div>
-              )}
-              {item.property_square_meters && (
-                <div>
-                  <span className="text-gray-400">Alan:</span>{" "}
-                  <span className="font-semibold text-novis-anthracite">{item.property_square_meters} m²</span>
-                </div>
-              )}
-              {item.property_floor && (
-                <div>
-                  <span className="text-gray-400">Bulunduğu Kat:</span>{" "}
-                  <span className="font-semibold text-novis-anthracite">{item.property_floor}</span>
-                </div>
-              )}
-              {item.property_original_price && (
-                <div>
-                  <span className="text-gray-400">Liste Fiyatı:</span>{" "}
-                  <span className="font-semibold text-novis-anthracite">{price(item.property_original_price)}</span>
-                </div>
-              )}
-              {item.property_address && (
-                <div className="col-span-2 text-gray-500 mt-1">
-                  <span className="text-gray-400">Adres:</span> {item.property_address}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <p className="text-xs text-gray-400">Bu ilana ait detay bulunamadı veya ilan silinmiş.</p>
-        )}
-      </div>
+      <PropertyInfoCard item={item} />
 
       {/* İŞLEM NOTLARI */}
       {item.notes && (

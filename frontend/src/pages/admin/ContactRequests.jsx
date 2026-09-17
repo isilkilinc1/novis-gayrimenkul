@@ -1,17 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
 import {
   getContactRequests,
   updateContactStatus,
   deleteContactRequest,
 } from "../../services/contactService";
 import Container from "../../components/ui/Container";
+import PropertyDetailsModal from "../../components/PropertyDetailsModal";
 
 export default function ContactRequests() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedPropertyId, setSelectedPropertyId] = useState(null);
 
   const fetchRequests = useCallback(async () => {
     try {
@@ -193,17 +194,17 @@ export default function ContactRequests() {
                       </td>
                       <td className="p-4 text-xs font-medium text-novis-anthracite">
                         {req.property_id ? (
-                          <Link
-                            to={`/admin/ilanlar/${req.property_id}/duzenle`}
-                            className="inline-flex items-center gap-1.5 bg-novis-cream/60 hover:bg-novis-cream text-novis-anthracite hover:text-novis-gold px-2.5 py-1.5 rounded-lg border border-novis-bronze/20 transition group"
-                            title="İlanı Yönet / Düzenle"
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPropertyId(req.property_id)}
+                            className="inline-flex items-center gap-1.5 bg-novis-cream/60 hover:bg-novis-cream text-novis-anthracite hover:text-novis-gold px-2.5 py-1.5 rounded-lg border border-novis-bronze/20 transition group max-w-[220px] text-left cursor-pointer"
+                            title="İlgili İlan Detaylarını Görüntüle"
                           >
                             <span>🏢</span>
-                            <span className="font-semibold underline decoration-dotted group-hover:decoration-solid">
-                              {req.property_title || `İlan #${req.property_id}`}
+                            <span className="font-semibold underline decoration-dotted group-hover:decoration-solid truncate">
+                              #{req.property_id} - {req.property_title || "İlan Başlığı Yok"}
                             </span>
-                            <span className="text-[10px] text-gray-400 group-hover:text-novis-gold">↗</span>
-                          </Link>
+                          </button>
                         ) : req.property_title ? (
                           <span className="inline-flex items-center gap-1 bg-gray-50 text-gray-500 px-2 py-1 rounded border border-gray-200">
                             🏢 {req.property_title}
@@ -256,6 +257,14 @@ export default function ContactRequests() {
             </div>
           )}
         </div>
+
+        {/* İlan Detay Modalı */}
+        {selectedPropertyId && (
+          <PropertyDetailsModal
+            propertyId={selectedPropertyId}
+            onClose={() => setSelectedPropertyId(null)}
+          />
+        )}
       </div>
     </Container>
   );

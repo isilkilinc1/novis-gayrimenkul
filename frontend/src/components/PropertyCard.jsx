@@ -27,15 +27,29 @@ function PropertyCard({ property }) {
     }
   }
 
+  const isVideoCover =
+    property.cover_media_type === "video" ||
+    Boolean(property.cover_image?.match(/\.(mp4|webm|mov|avi|mkv)$/i));
+
   return (
     <article className="overflow-hidden rounded-2xl border border-novis-bronze/20 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
-      {/* Fotoğraf Alanı */}
-      <div className="relative h-56 bg-novis-bronze/10">
-        <img
-          src={imageUrl}
-          alt={property.title}
-          className="h-full w-full object-cover"
-        />
+      {/* Medya Alanı */}
+      <div className="relative h-56 bg-novis-bronze/10 overflow-hidden">
+        {isVideoCover ? (
+          <video
+            src={imageUrl}
+            muted
+            playsInline
+            preload="metadata"
+            className="h-full w-full object-cover bg-black pointer-events-none"
+          />
+        ) : (
+          <img
+            src={imageUrl}
+            alt={property.title}
+            className="h-full w-full object-cover"
+          />
+        )}
 
         {/* Satılık / Kiralık Etiketi */}
         <div className="absolute left-4 top-4 flex gap-2">
@@ -49,6 +63,12 @@ function PropertyCard({ property }) {
             {property.property_type === "LAND" && "Arsa"}
             {property.property_type === "COMMERCIAL" && "İşyeri"}
           </Badge>
+
+          {isVideoCover && (
+            <Badge variant="bronze">
+              🎬 Video
+            </Badge>
+          )}
         </div>
       </div>
 

@@ -22,8 +22,9 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const DEFAULT_LATITUDE = 37.8746;
-const DEFAULT_LONGITUDE = 32.4932;
+const DEFAULT_LATITUDE = 41.0082; // İstanbul
+const DEFAULT_LONGITUDE = 28.9784; // İstanbul
+const DEFAULT_ZOOM = 11; // İstanbul şehir görünümü zoom seviyesi
 
 /* ==================================================
    HARİTAYI DIŞARIDAN GELEN KOORDİNATA GÖTÜR
@@ -451,7 +452,11 @@ function AdminPropertyMap({
       <div className="w-full h-96 rounded-xl overflow-hidden border border-novis-bronze/30 shadow-sm relative z-0 isolate">
         <MapContainer
           center={[currentLatitude, currentLongitude]}
-          zoom={14}
+          zoom={
+            Number.isFinite(parsedLatitude) && Number.isFinite(parsedLongitude)
+              ? 14
+              : DEFAULT_ZOOM
+          }
           scrollWheelZoom={true}
           style={{
             width: "100%",

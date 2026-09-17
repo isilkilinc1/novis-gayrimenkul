@@ -160,48 +160,70 @@ function PropertyDetail() {
             </div>
           </div>
 
-          {/* 📸 FOTOĞRAF GALERİSİ ALANI */}
+          {/* 📸 FOTOĞRAF GALERİSİ / VİDEO KAPAK ALANI */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl border border-novis-bronze/20 shadow-sm space-y-4">
-            {/* Büyük Ana Fotoğraf / Lightbox Tetikleyicisi */}
-            <div
-              className="relative h-72 sm:h-96 rounded-xl overflow-hidden bg-novis-bronze/10 border border-novis-bronze/20 cursor-pointer group"
-              onClick={() => photos.length > 0 && setLightboxOpen(true)}
-            >
-              <img
-                src={currentImage}
-                alt={property.title}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
-              />
-              {photos.length > 0 && (
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="bg-black/70 text-white text-xs px-4 py-2 rounded-lg font-medium backdrop-blur-xs shadow-sm">
-                    🔍 Büyük Boyutta Görüntüle
-                  </span>
+            {photos.length > 0 ? (
+              <>
+                {/* Büyük Ana Fotoğraf / Lightbox Tetikleyicisi */}
+                <div
+                  className="relative h-72 sm:h-96 rounded-xl overflow-hidden bg-novis-bronze/10 border border-novis-bronze/20 cursor-pointer group"
+                  onClick={() => setLightboxOpen(true)}
+                >
+                  <img
+                    src={currentImage}
+                    alt={property.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
+                  />
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="bg-black/70 text-white text-xs px-4 py-2 rounded-lg font-medium backdrop-blur-xs shadow-sm">
+                      🔍 Büyük Boyutta Görüntüle
+                    </span>
+                  </div>
                 </div>
-              )}
-            </div>
 
-            {/* Küçük Galeri Küçük Resimleri (Thumbnails) */}
-            {photos.length > 1 && (
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {photos.map((img, index) => (
-                  <button
-                    key={img.id}
-                    type="button"
-                    onClick={() => setActiveImageIndex(index)}
-                    className={`relative w-20 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition ${
-                      activeImageIndex === index
-                        ? "border-novis-gold shadow-sm scale-102"
-                        : "border-transparent opacity-70 hover:opacity-100"
-                    }`}
-                  >
-                    <img
-                      src={getFullImageUrl(img.image_url)}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
+                {/* Küçük Galeri Küçük Resimleri (Thumbnails) */}
+                {photos.length > 1 && (
+                  <div className="flex gap-3 overflow-x-auto pb-2">
+                    {photos.map((img, index) => (
+                      <button
+                        key={img.id}
+                        type="button"
+                        onClick={() => setActiveImageIndex(index)}
+                        className={`relative w-20 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition ${
+                          activeImageIndex === index
+                            ? "border-novis-gold shadow-sm scale-102"
+                            : "border-transparent opacity-70 hover:opacity-100"
+                        }`}
+                      >
+                        <img
+                          src={getFullImageUrl(img.image_url)}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : videos.length > 0 ? (
+              <div className="relative h-72 sm:h-96 rounded-xl overflow-hidden bg-black border border-novis-bronze/20">
+                <video
+                  src={getFullImageUrl(videos[0].image_url)}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="w-full h-full object-contain bg-black"
+                >
+                  Tarayıcınız video oynatmayı desteklemiyor.
+                </video>
+              </div>
+            ) : (
+              <div className="relative h-72 sm:h-96 rounded-xl overflow-hidden bg-novis-bronze/10 border border-novis-bronze/20">
+                <img
+                  src="/images/property-placeholder.jpg"
+                  alt={property.title}
+                  className="w-full h-full object-cover"
+                />
               </div>
             )}
           </div>

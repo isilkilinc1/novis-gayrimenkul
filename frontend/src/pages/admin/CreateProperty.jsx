@@ -41,8 +41,8 @@ function CreateProperty() {
     listing_type: "SALE",
     status: "ACTIVE",
     price: "",
-    city: "Konya",
-    district: "Selçuklu",
+    city: "İstanbul",
+    district: "Kadıköy",
     neighborhood: "",
     address: "",
     rooms: "3+1",
@@ -59,11 +59,11 @@ function CreateProperty() {
   const getTitlePlaceholder = () => {
     switch (formData.property_type) {
       case "LAND":
-        return "Örn. Meram'da Yatırımlık 1200m² Arsa";
+        return "Örn. Beykoz'da Yatırımlık 1200m² Arsa";
       case "COMMERCIAL":
-        return "Örn. Şehir Merkezinde Kiralık Dükkan";
+        return "Örn. Kadıköy Şehir Merkezinde Kiralık Dükkan";
       default:
-        return "Örn. Selçuklu'da Lüks 3+1 Daire";
+        return "Örn. Beşiktaş'ta Lüks 3+1 Daire";
     }
   };
 
@@ -120,14 +120,31 @@ function CreateProperty() {
 
     setMediaFiles((prev) => {
       const combined = [...prev, ...newItems];
-      // Eğer mevcut listede hiç kapak seçili fotoğraf yoksa, ilk fotoğrafı kapak yap (videolar kapak olamaz)
-      const hasCoverPhoto = combined.some((item) => !item.isVideo && item.isCover);
-      if (!hasCoverPhoto) {
-        const firstPhotoIndex = combined.findIndex((item) => !item.isVideo);
-        if (firstPhotoIndex !== -1) {
-          combined[firstPhotoIndex].isCover = true;
+      const hasPhoto = combined.some((item) => !item.isVideo);
+
+      if (hasPhoto) {
+        // Eğer en az bir fotoğraf varsa, kapak sadece fotoğraflardan olabilir
+        const hasCoverPhoto = combined.some((item) => !item.isVideo && item.isCover);
+        if (!hasCoverPhoto) {
+          const firstPhotoIndex = combined.findIndex((item) => !item.isVideo);
+          if (firstPhotoIndex !== -1) {
+            combined.forEach((item, idx) => {
+              item.isCover = idx === firstPhotoIndex;
+            });
+          }
+        } else {
+          // Videolardan isCover'ı kaldır
+          combined.forEach((item) => {
+            if (item.isVideo) item.isCover = false;
+          });
         }
+      } else if (combined.length > 0) {
+        // İlanda HİÇ FOTOĞRAF YOKSA, ilk video otomatik kapak medya olur
+        combined.forEach((item, idx) => {
+          item.isCover = idx === 0;
+        });
       }
+
       return combined;
     });
 
@@ -146,14 +163,27 @@ function CreateProperty() {
       }
       const filtered = prev.filter((item) => item.id !== idToRemove);
 
-      // Eğer silinen öğe kapak fotoğrafıysa ve geriye başka fotoğraf kaldıysa ilk fotoğrafı kapak yap
-      const hasCover = filtered.some((item) => !item.isVideo && item.isCover);
-      if (!hasCover) {
-        const firstPhotoIndex = filtered.findIndex((item) => !item.isVideo);
-        if (firstPhotoIndex !== -1) {
-          filtered[firstPhotoIndex].isCover = true;
+      const hasPhoto = filtered.some((item) => !item.isVideo);
+
+      if (hasPhoto) {
+        // Fotoğraf varsa, kapak sadece fotoğraftan seçilir
+        const hasCoverPhoto = filtered.some((item) => !item.isVideo && item.isCover);
+        if (!hasCoverPhoto) {
+          const firstPhotoIndex = filtered.findIndex((item) => !item.isVideo);
+          if (firstPhotoIndex !== -1) {
+            filtered[firstPhotoIndex].isCover = true;
+          }
         }
+        filtered.forEach((item) => {
+          if (item.isVideo) item.isCover = false;
+        });
+      } else if (filtered.length > 0) {
+        // Fotoğraf kalmadıysa ilk video otomatik kapak olur
+        filtered.forEach((item, idx) => {
+          item.isCover = idx === 0;
+        });
       }
+
       return filtered;
     });
   };
@@ -569,10 +599,14 @@ function CreateProperty() {
                     Toplam {mediaFiles.length} medya ({photoCount} Fotoğraf, {videoCount} Video)
                   </span>
                   <span>
-                    ⭐ Kapak Fotoğrafı:{" "}
+                    ⭐ Kapak Medya:{" "}
                     <strong className="text-novis-anthracite">
-                      {mediaFiles.find((m) => !m.isVideo && m.isCover)?.name ||
-                        "Seçilmedi (İlk fotoğraf varsayılan olacaktır)"}
+                      {photoCount > 0
+                        ? mediaFiles.find((m) => !m.isVideo && m.isCover)?.name ||
+                          "İlk fotoğraf varsayılan olacaktır"
+                        : mediaFiles.find((m) => m.isVideo && m.isCover)?.name
+                          ? `${mediaFiles.find((m) => m.isVideo && m.isCover)?.name} (Otomatik Video Kapak)`
+                          : "Seçilmedi"}
                     </strong>
                   </span>
                 </div>
@@ -617,7 +651,7 @@ function CreateProperty() {
 
                           {item.isCover && (
                             <span className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow flex items-center gap-1">
-                              ⭐ Kapak
+                              {item.isVideo ? "⭐ Kapak Video" : "⭐ Kapak"}
                             </span>
                           )}
                         </div>
@@ -667,9 +701,13 @@ function CreateProperty() {
                             </button>
                           ) : (
                             <span className="text-[11px] font-bold text-amber-600">
-                              Kapak
+                              Kapak Foto
                             </span>
                           )
+                        ) : item.isCover ? (
+                          <span className="text-[10px] text-amber-600 font-bold">
+                            Otomatik Kapak
+                          </span>
                         ) : (
                           <span className="text-[10px] text-gray-400 italic">
                             Video

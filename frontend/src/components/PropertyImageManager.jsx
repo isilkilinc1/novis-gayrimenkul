@@ -198,7 +198,10 @@ export default function PropertyImageManager({ propertyId }) {
             İlan Medyaları (Fotoğraf & Video)
           </h3>
           <p className="text-xs text-gray-500 mt-0.5">
-            Mevcut: {photoCount} Fotoğraf, {videoCount} Video. Kapak fotoğrafı yalnızca fotoğraflardan seçilebilir.
+            Mevcut: {photoCount} Fotoğraf, {videoCount} Video.{" "}
+            {photoCount === 0 && videoCount > 0
+              ? "İlanda fotoğraf olmadığı için ilk video otomatik kapak medya olarak kullanılır."
+              : "Kapak fotoğrafı fotoğraflar arasından seçilir."}
           </p>
         </div>
 
@@ -243,16 +246,21 @@ export default function PropertyImageManager({ propertyId }) {
       ) : (
         /* MEDYALAR GRID */
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {images.map((img) => {
+          {images.map((img, index) => {
             const isVideo =
               img.media_type === "video" ||
               Boolean(img.image_url?.match(/\.(mp4|webm|mov|avi|mkv)$/i));
+
+            const isFallbackVideoCover =
+              photoCount === 0 && isVideo && index === 0;
+
+            const isCover = img.is_cover || isFallbackVideoCover;
 
             return (
               <div
                 key={img.id}
                 className={`relative group border rounded-lg overflow-hidden bg-gray-50 shadow-sm ${
-                  img.is_cover ? "border-amber-500 ring-2 ring-amber-400/40" : "border-gray-200"
+                  isCover ? "border-amber-500 ring-2 ring-amber-400/40" : "border-gray-200"
                 }`}
               >
                 {/* MEDYA ALANI */}
@@ -283,9 +291,9 @@ export default function PropertyImageManager({ propertyId }) {
                       </span>
                     )}
 
-                    {img.is_cover && (
+                    {isCover && (
                       <span className="bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded font-medium shadow">
-                        ⭐ Kapak
+                        {isVideo ? "⭐ Kapak Video" : "⭐ Kapak"}
                       </span>
                     )}
                   </div>
@@ -307,6 +315,10 @@ export default function PropertyImageManager({ propertyId }) {
                         Kapak Fotoğrafı
                       </span>
                     )
+                  ) : isFallbackVideoCover ? (
+                    <span className="text-xs text-amber-600 font-semibold">
+                      Otomatik Kapak
+                    </span>
                   ) : (
                     <span className="text-xs text-gray-400 font-medium italic">
                       Video

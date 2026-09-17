@@ -20,11 +20,37 @@ const getAllActiveProperties = async (queryParams = {}) => {
   let query = `
     SELECT 
       p.*,
-      pi.image_url AS cover_image
+      COALESCE(
+        pi_cover.image_url,
+        pi_first_photo.image_url,
+        pi_first_video.image_url
+      ) AS cover_image,
+      COALESCE(
+        pi_cover.media_type,
+        pi_first_photo.media_type,
+        pi_first_video.media_type,
+        'image'
+      ) AS cover_media_type
     FROM properties p
-    LEFT JOIN property_images pi
-      ON pi.property_id = p.id
-      AND pi.is_cover = TRUE
+    LEFT JOIN property_images pi_cover
+      ON pi_cover.property_id = p.id
+      AND pi_cover.is_cover = TRUE
+    LEFT JOIN LATERAL (
+      SELECT image_url, media_type
+      FROM property_images
+      WHERE property_id = p.id
+        AND (media_type IS NULL OR media_type = 'image')
+      ORDER BY display_order ASC, id ASC
+      LIMIT 1
+    ) pi_first_photo ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT image_url, media_type
+      FROM property_images
+      WHERE property_id = p.id
+        AND media_type = 'video'
+      ORDER BY display_order ASC, id ASC
+      LIMIT 1
+    ) pi_first_video ON TRUE
     WHERE p.status = 'ACTIVE'
   `;
 
@@ -180,9 +206,40 @@ const getAllActiveProperties = async (queryParams = {}) => {
 // 1. B) Tüm ilanları getir (Admin paneli için - Bütün status'ler dahil)
 const getAllProperties = async () => {
   const result = await pool.query(`
-    SELECT *
-    FROM properties
-    ORDER BY created_at DESC
+    SELECT 
+      p.*,
+      COALESCE(
+        pi_cover.image_url,
+        pi_first_photo.image_url,
+        pi_first_video.image_url
+      ) AS cover_image,
+      COALESCE(
+        pi_cover.media_type,
+        pi_first_photo.media_type,
+        pi_first_video.media_type,
+        'image'
+      ) AS cover_media_type
+    FROM properties p
+    LEFT JOIN property_images pi_cover
+      ON pi_cover.property_id = p.id
+      AND pi_cover.is_cover = TRUE
+    LEFT JOIN LATERAL (
+      SELECT image_url, media_type
+      FROM property_images
+      WHERE property_id = p.id
+        AND (media_type IS NULL OR media_type = 'image')
+      ORDER BY display_order ASC, id ASC
+      LIMIT 1
+    ) pi_first_photo ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT image_url, media_type
+      FROM property_images
+      WHERE property_id = p.id
+        AND media_type = 'video'
+      ORDER BY display_order ASC, id ASC
+      LIMIT 1
+    ) pi_first_video ON TRUE
+    ORDER BY p.created_at DESC
   `);
   return result.rows;
 };
@@ -191,9 +248,40 @@ const getAllProperties = async () => {
 const getPropertyById = async (id) => {
   const result = await pool.query(
     `
-    SELECT *
-    FROM properties
-    WHERE id = $1
+    SELECT 
+      p.*,
+      COALESCE(
+        pi_cover.image_url,
+        pi_first_photo.image_url,
+        pi_first_video.image_url
+      ) AS cover_image,
+      COALESCE(
+        pi_cover.media_type,
+        pi_first_photo.media_type,
+        pi_first_video.media_type,
+        'image'
+      ) AS cover_media_type
+    FROM properties p
+    LEFT JOIN property_images pi_cover
+      ON pi_cover.property_id = p.id
+      AND pi_cover.is_cover = TRUE
+    LEFT JOIN LATERAL (
+      SELECT image_url, media_type
+      FROM property_images
+      WHERE property_id = p.id
+        AND (media_type IS NULL OR media_type = 'image')
+      ORDER BY display_order ASC, id ASC
+      LIMIT 1
+    ) pi_first_photo ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT image_url, media_type
+      FROM property_images
+      WHERE property_id = p.id
+        AND media_type = 'video'
+      ORDER BY display_order ASC, id ASC
+      LIMIT 1
+    ) pi_first_video ON TRUE
+    WHERE p.id = $1
     `,
     [id],
   );

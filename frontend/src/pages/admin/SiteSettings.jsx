@@ -182,7 +182,7 @@ function SiteSettings() {
               </div>
 
               <div className="flex justify-end pt-2">
-                <Button type="submit" disabled={saving}>
+                <Button type="submit" disabled={saving} className="w-full sm:w-auto">
                   {saving ? "Kaydediliyor..." : "Değişiklikleri Kaydet"}
                 </Button>
               </div>

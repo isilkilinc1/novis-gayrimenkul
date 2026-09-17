@@ -305,12 +305,12 @@ function CreateProperty() {
   return (
     <Container>
       <div className="max-w-3xl mx-auto py-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="font-display text-3xl font-bold text-novis-anthracite">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-novis-anthracite">
               Yeni İlan Ekle
             </h1>
-            <p className="mt-1 text-sm text-novis-brown">
+            <p className="mt-1 text-xs sm:text-sm text-novis-brown">
               Sisteme yeni bir gayrimenkul ilanı kaydetmek, fotoğraf ve video eklemek
               için formu doldurun.
             </p>
@@ -319,6 +319,7 @@ function CreateProperty() {
             type="button"
             variant="outline"
             onClick={() => navigate("/admin/ilanlar")}
+            className="w-full sm:w-auto self-start sm:self-auto"
           >
             İptal
           </Button>
@@ -332,13 +333,13 @@ function CreateProperty() {
 
         <form
           onSubmit={handleSubmit}
-          className="bg-white p-6 sm:p-8 rounded-2xl border border-novis-bronze/20 shadow-sm space-y-6"
+          className="bg-white p-4 sm:p-8 rounded-2xl border border-novis-bronze/20 shadow-sm space-y-6"
         >
           <div className="p-4 bg-novis-cream/30 rounded-xl border border-novis-bronze/20">
             <label className="block text-sm font-bold text-novis-anthracite mb-2">
               Gayrimenkul Türü *
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {["HOUSE", "LAND", "COMMERCIAL"].map((type) => (
                 <button
                   key={type}
@@ -346,7 +347,7 @@ function CreateProperty() {
                   onClick={() =>
                     setFormData((prev) => ({ ...prev, property_type: type }))
                   }
-                  className={`py-2.5 px-4 rounded-lg text-sm font-medium transition border ${
+                  className={`py-2 px-1.5 sm:py-2.5 sm:px-4 rounded-lg text-xs sm:text-sm font-medium transition border text-center ${
                     formData.property_type === type
                       ? "bg-novis-anthracite text-white border-novis-anthracite"
                       : "bg-white text-novis-anthracite border-novis-bronze/30 hover:bg-gray-50"

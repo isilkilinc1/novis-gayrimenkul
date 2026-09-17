@@ -304,127 +304,227 @@ export default function TransactionHistory() {
           </div>
         )}
 
-        {/* TABLO */}
-        <div className="overflow-hidden rounded-2xl border border-novis-bronze/20 bg-white shadow-xs">
-          <div className="overflow-x-auto">
-            {loading ? (
-              <div className="p-10 text-center text-gray-500 text-sm">
-                İşlem geçmişi yükleniyor...
-              </div>
-            ) : error ? null : transactions.length === 0 ? (
-              <div className="p-10 text-center text-gray-500 text-sm">
-                Henüz kayıtlı işlem bulunmuyor.
-              </div>
-            ) : (
-              <table className="w-full min-w-[900px] text-left text-sm">
-                <thead>
-                  <tr className="bg-novis-cream/40 border-b border-novis-bronze/10 text-xs font-bold text-novis-anthracite uppercase">
-                    <th className="p-4">Tarih</th>
-                    <th className="p-4">İşlem</th>
-                    <th className="p-4">Müşteri</th>
-                    <th className="p-4">İLGİLİ İLAN</th>
-                    <th className="p-4">Tür</th>
-                    <th className="p-4">Fiyat</th>
-                    <th className="p-4">Not</th>
-                    <th className="no-print p-4 text-right">Aksiyon</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {transactions.map((item) => (
-                    <tr
-                      key={item.id}
-                      onClick={() => setSelected(item)}
-                      className="cursor-pointer hover:bg-gray-50/80 transition"
-                    >
-                      <td className="p-4 font-medium text-gray-700 whitespace-nowrap">
-                        {date(item.transaction_date)}
-                      </td>
-
-                      <td className="p-4">{badge(item.transaction_type)}</td>
-
-                      <td className="p-4">
-                        <div className="font-bold text-novis-anthracite">
-                          {item.customer_name || "Müşteri artık mevcut değil"}
+        {/* TABLO VE MOBİL LİSTE */}
+        <div>
+          {loading ? (
+            <div className="rounded-2xl border border-novis-bronze/20 bg-white p-10 text-center text-gray-500 text-sm">
+              İşlem geçmişi yükleniyor...
+            </div>
+          ) : error ? null : transactions.length === 0 ? (
+            <div className="rounded-2xl border border-novis-bronze/20 bg-white p-10 text-center text-gray-500 text-sm">
+              Henüz kayıtlı işlem bulunmuyor.
+            </div>
+          ) : (
+            <>
+              {/* MOBİL KART LİSTESİ (md altı ekranlar) */}
+              <div className="md:hidden space-y-3.5">
+                {transactions.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => setSelected(item)}
+                    className="bg-white rounded-2xl border border-novis-bronze/20 p-4 shadow-xs space-y-3 cursor-pointer"
+                  >
+                    {/* Üst: Tarih, Tür ve Fiyat */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          {badge(item.transaction_type)}
+                          <span className="text-xs text-gray-500">
+                            {date(item.transaction_date)}
+                          </span>
                         </div>
+                        <p className="font-bold text-novis-anthracite text-base mt-1.5">
+                          {item.customer_name || "Müşteri artık mevcut değil"}
+                        </p>
                         {item.customer_phone && (
-                          <div className="text-xs text-novis-brown mt-0.5">
+                          <p className="text-xs text-novis-brown mt-0.5">
                             📞 {item.customer_phone}
-                          </div>
+                          </p>
                         )}
-                      </td>
+                      </div>
 
-                      <td className="p-4">
-                        {item.property_id ? (
-                          <div
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelected(item);
-                            }}
-                            className="inline-flex flex-col text-left group cursor-pointer"
-                            title="İşlem ve İlan Detaylarını Görüntüle"
-                          >
-                            <span className="font-bold text-novis-anthracite group-hover:text-novis-gold transition underline decoration-dotted max-w-[220px] truncate">
-                              🏢 #{item.property_id} - {item.property_title || "İlan Başlığı Yok"}
-                            </span>
-                            <span className="text-xs text-gray-500 mt-0.5">
-                              {[item.property_city, item.property_district].filter(Boolean).join(" / ")}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">İlan artık mevcut değil</span>
-                        )}
-                      </td>
+                      <div className="text-right shrink-0">
+                        <span className="text-xs text-gray-400 block uppercase font-semibold">Fiyat</span>
+                        <span className="font-bold text-novis-gold text-base">
+                          {price(item.final_price)}
+                        </span>
+                      </div>
+                    </div>
 
-                      <td className="p-4 text-gray-600">
-                        {types[item.property_type] || "-"}
-                      </td>
+                    {/* İlgili İlan */}
+                    {item.property_id ? (
+                      <div className="pt-2 border-t border-gray-100">
+                        <div className="text-xs text-novis-anthracite font-semibold truncate">
+                          🏢 #{item.property_id} - {item.property_title || "İlan Başlığı Yok"}
+                        </div>
+                        <div className="text-[11px] text-gray-500 mt-0.5">
+                          {[types[item.property_type], item.property_city, item.property_district].filter(Boolean).join(" · ")}
+                        </div>
+                      </div>
+                    ) : null}
 
-                      <td className="p-4 font-bold text-novis-anthracite whitespace-nowrap">
-                        {price(item.final_price)}
-                      </td>
+                    {/* Not */}
+                    {item.notes && (
+                      <div className="bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-xs text-gray-600">
+                        <span className="font-semibold block text-[11px] text-gray-500 mb-0.5">İşlem Notu:</span>
+                        {item.notes}
+                      </div>
+                    )}
 
-                      <td className="p-4 max-w-xs truncate text-gray-500" title={item.notes}>
-                        {item.notes || "-"}
-                      </td>
-
-                      <td
-                        className="no-print p-4 text-right whitespace-nowrap"
-                        onClick={(e) => e.stopPropagation()}
+                    {/* Aksiyon Butonları */}
+                    <div
+                      className="no-print pt-2 border-t border-gray-100 grid grid-cols-3 gap-1.5"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setSelected(item)}
+                        className="text-novis-bronze hover:text-novis-brown text-xs font-semibold py-2 px-1 bg-novis-cream rounded-xl transition text-center cursor-pointer"
                       >
-                        <button
+                        Detay
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditing({
+                            ...item,
+                            transaction_date: item.transaction_date?.slice(0, 10) || "",
+                          });
+                          setModalError("");
+                        }}
+                        className="text-blue-600 hover:text-blue-800 text-xs font-semibold py-2 px-1 bg-blue-50 rounded-xl transition text-center cursor-pointer"
+                      >
+                        Düzenle
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeleting(item);
+                          setModalError("");
+                        }}
+                        className="text-red-500 hover:text-red-700 text-xs font-semibold py-2 px-1 bg-red-50 rounded-xl transition text-center cursor-pointer"
+                      >
+                        Sil
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* MASAÜSTÜ TABLO (md ve üzeri ekranlar) */}
+              <div className="hidden md:block overflow-hidden rounded-2xl border border-novis-bronze/20 bg-white shadow-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="bg-novis-cream/40 border-b border-novis-bronze/10 text-xs font-bold text-novis-anthracite uppercase">
+                        <th className="p-4">Tarih</th>
+                        <th className="p-4">İşlem</th>
+                        <th className="p-4">Müşteri</th>
+                        <th className="p-4">İLGİLİ İLAN</th>
+                        <th className="p-4">Tür</th>
+                        <th className="p-4">Fiyat</th>
+                        <th className="p-4">Not</th>
+                        <th className="no-print p-4 text-right">Aksiyon</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {transactions.map((item) => (
+                        <tr
+                          key={item.id}
                           onClick={() => setSelected(item)}
-                          className="text-novis-bronze hover:text-novis-brown text-xs font-semibold px-2.5 py-1.5 bg-novis-cream hover:bg-novis-gold/20 rounded-lg transition mr-2"
+                          className="cursor-pointer hover:bg-gray-50/80 transition"
                         >
-                          Detay
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditing({
-                              ...item,
-                              transaction_date: item.transaction_date?.slice(0, 10) || "",
-                            });
-                            setModalError("");
-                          }}
-                          className="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition mr-2"
-                        >
-                          Düzenle
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDeleting(item);
-                            setModalError("");
-                          }}
-                          className="text-red-500 hover:text-red-700 text-xs font-semibold px-2.5 py-1.5 bg-red-50 hover:bg-red-100 rounded-lg transition"
-                        >
-                          Sil
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+                          <td className="p-4 font-medium text-gray-700 whitespace-nowrap">
+                            {date(item.transaction_date)}
+                          </td>
+
+                          <td className="p-4">{badge(item.transaction_type)}</td>
+
+                          <td className="p-4">
+                            <div className="font-bold text-novis-anthracite">
+                              {item.customer_name || "Müşteri artık mevcut değil"}
+                            </div>
+                            {item.customer_phone && (
+                              <div className="text-xs text-novis-brown mt-0.5">
+                                📞 {item.customer_phone}
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="p-4">
+                            {item.property_id ? (
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelected(item);
+                                }}
+                                className="inline-flex flex-col text-left group cursor-pointer"
+                                title="İşlem ve İlan Detaylarını Görüntüle"
+                              >
+                                <span className="font-bold text-novis-anthracite group-hover:text-novis-gold transition underline decoration-dotted max-w-[220px] truncate">
+                                  🏢 #{item.property_id} - {item.property_title || "İlan Başlığı Yok"}
+                                </span>
+                                <span className="text-xs text-gray-500 mt-0.5">
+                                  {[item.property_city, item.property_district].filter(Boolean).join(" / ")}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">İlan artık mevcut değil</span>
+                            )}
+                          </td>
+
+                          <td className="p-4 text-gray-600">
+                            {types[item.property_type] || "-"}
+                          </td>
+
+                          <td className="p-4 font-bold text-novis-anthracite whitespace-nowrap">
+                            {price(item.final_price)}
+                          </td>
+
+                          <td className="p-4 max-w-xs truncate text-gray-500" title={item.notes}>
+                            {item.notes || "-"}
+                          </td>
+
+                          <td
+                            className="no-print p-4 text-right whitespace-nowrap"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              onClick={() => setSelected(item)}
+                              className="text-novis-bronze hover:text-novis-brown text-xs font-semibold px-2.5 py-1.5 bg-novis-cream hover:bg-novis-gold/20 rounded-lg transition mr-2 cursor-pointer"
+                            >
+                              Detay
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditing({
+                                  ...item,
+                                  transaction_date: item.transaction_date?.slice(0, 10) || "",
+                                });
+                                setModalError("");
+                              }}
+                              className="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition mr-2 cursor-pointer"
+                            >
+                              Düzenle
+                            </button>
+                            <button
+                              onClick={() => {
+                                setDeleting(item);
+                                setModalError("");
+                              }}
+                              className="text-red-500 hover:text-red-700 text-xs font-semibold px-2.5 py-1.5 bg-red-50 hover:bg-red-100 rounded-lg transition cursor-pointer"
+                            >
+                              Sil
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {!loading && !error && pagination.totalPages > 1 && (

@@ -19,20 +19,20 @@ function About() {
   }, []);
 
   return (
-    <section className="py-16 sm:py-20">
+    <section className="py-12 sm:py-20">
       <Container>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center">
           {/* Sol Taraf - Yazılar */}
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-novis-bronze">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-novis-bronze">
               NOVIS GAYRİMENKUL
             </p>
 
-            <h1 className="mt-3 font-display text-4xl sm:text-5xl font-bold text-novis-anthracite">
+            <h1 className="mt-2 sm:mt-3 font-display text-3xl sm:text-5xl font-bold text-novis-anthracite">
               {settings?.about_title || "Hakkımızda"}
             </h1>
 
-            <div className="mt-6 space-y-5 max-w-2xl">
+            <div className="mt-5 sm:mt-6 space-y-4 sm:space-y-5 max-w-2xl">
               {(
                 settings?.about_content ||
                 `NOVIS Gayrimenkul; alım, satım, kiralama ve inşaat alanlarında profesyonel hizmet sunan bir gayrimenkul firmasıdır.
@@ -43,7 +43,7 @@ Amacımız yalnızca bir gayrimenkul işlemi gerçekleştirmek değil, müşteri
               )
                 .split(/\n\s*\n/)
                 .map((paragraph, index) => (
-                  <p key={index} className="leading-8 text-novis-brown">
+                  <p key={index} className="text-sm sm:text-base leading-7 sm:leading-8 text-novis-brown">
                     {paragraph}
                   </p>
                 ))}
@@ -51,15 +51,15 @@ Amacımız yalnızca bir gayrimenkul işlemi gerçekleştirmek değil, müşteri
           </div>
 
           {/* Sağ Taraf - Logo */}
-          <div className="flex items-center justify-center lg:justify-end">
-            <div className="relative w-full max-w-sm">
+          <div className="flex items-center justify-center lg:justify-end mt-4 lg:mt-0">
+            <div className="relative w-full max-w-xs sm:max-w-sm">
               <div className="absolute inset-0 rounded-3xl bg-novis-gold/10 blur-2xl"></div>
 
-              <div className="relative flex items-center justify-center rounded-3xl-novis-bronze/20 ">
+              <div className="relative flex items-center justify-center rounded-3xl border border-novis-bronze/20 p-6 bg-white/40 shadow-xs">
                 <img
                   src="/images/novis-logo.png"
                   alt="NOVIS Gayrimenkul Logo"
-                  className="w-full max-w-100 h-auto object-contain"
+                  className="w-full max-w-64 sm:max-w-xs h-auto object-contain"
                 />
               </div>
             </div>

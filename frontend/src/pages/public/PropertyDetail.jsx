@@ -148,12 +148,12 @@ function PropertyDetail() {
               {property.neighborhood ? `• ${property.neighborhood} Mah.` : ""}
             </p>
 
-            <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-between flex-wrap gap-4">
+            <div className="mt-5 sm:mt-6 pt-5 sm:pt-6 border-t border-gray-100 flex items-center justify-between flex-wrap gap-4">
               <div>
                 <span className="text-xs text-novis-brown uppercase tracking-wider block">
                   Fiyat
                 </span>
-                <span className="text-3xl font-bold text-novis-gold">
+                <span className="text-2xl sm:text-3xl font-bold text-novis-gold">
                   {Number(property.price).toLocaleString("tr-TR")} TL
                 </span>
               </div>
@@ -166,7 +166,7 @@ function PropertyDetail() {
               <>
                 {/* Büyük Ana Fotoğraf / Lightbox Tetikleyicisi */}
                 <div
-                  className="relative h-72 sm:h-96 rounded-xl overflow-hidden bg-novis-bronze/10 border border-novis-bronze/20 cursor-pointer group"
+                  className="relative h-56 sm:h-80 md:h-96 rounded-xl overflow-hidden bg-novis-bronze/10 border border-novis-bronze/20 cursor-pointer group"
                   onClick={() => setLightboxOpen(true)}
                 >
                   <img

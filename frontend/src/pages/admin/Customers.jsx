@@ -462,145 +462,262 @@ export default function Customers() {
         )}
 
         {/* =====================================================
-            MÜŞTERİ TABLOSU
+            MÜŞTERİ TABLOSU VE MOBİL LİSTE
         ====================================================== */}
-        <div className="bg-white rounded-2xl border border-novis-bronze/20 shadow-xs overflow-hidden">
+        <div>
           {loading ? (
-            <div className="p-8 text-center text-gray-500 text-sm">
+            <div className="bg-white rounded-2xl border border-novis-bronze/20 p-8 text-center text-gray-500 text-sm">
               Müşteriler yükleniyor...
             </div>
           ) : filteredCustomers.length === 0 ? (
-            <div className="p-8 text-center text-gray-500 text-sm">
+            <div className="bg-white rounded-2xl border border-novis-bronze/20 p-8 text-center text-gray-500 text-sm">
               {searchTerm
                 ? `"${searchTerm}" ile eşleşen müşteri bulunamadı.`
                 : "Kayıtlı müşteri bulunamadı."}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-novis-cream/40 border-b border-novis-bronze/10 text-xs font-bold text-novis-anthracite uppercase">
-                    <th className="p-4">Ad Soyad</th>
-                    <th className="p-4">Telefon</th>
-                    <th className="p-4">Bütçe</th>
-                    <th className="p-4">Talep</th>
-                    <th className="p-4">İLGİLENDİĞİ İLAN</th>
-                    <th className="p-4">Durum</th>
-                    <th className="p-4">Not</th>
-                    <th className="p-4 text-right">İşlemler</th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-gray-100 text-sm">
-                  {filteredCustomers.map((customer) => (
-                    <tr
-                      key={customer.id}
-                      className="hover:bg-gray-50 transition"
-                    >
-                      <td className="p-4 font-bold text-novis-anthracite">
-                        <div>{customer.name}</div>
-
+            <>
+              {/* MOBİL KART LİSTESİ (md altı ekranlar) */}
+              <div className="md:hidden space-y-3.5">
+                {filteredCustomers.map((customer) => (
+                  <div
+                    key={customer.id}
+                    className="bg-white rounded-2xl border border-novis-bronze/20 p-4 shadow-xs space-y-3"
+                  >
+                    {/* Üst Kısım: İsim ve Durum */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="font-bold text-novis-anthracite text-base">
+                          {customer.name}
+                        </h3>
                         {customer.email && (
                           <a
                             href={`mailto:${customer.email}`}
-                            className="text-xs font-normal text-novis-brown hover:underline block mt-0.5"
+                            className="text-xs text-novis-brown hover:underline block mt-0.5"
                           >
                             ✉️ {customer.email}
                           </a>
                         )}
-                      </td>
+                      </div>
+                      <div className="shrink-0">
+                        {getStatusBadge(customer.status)}
+                      </div>
+                    </div>
 
-                      <td className="p-4 text-gray-600">
-                        {customer.phone ? (
+                    {/* İletişim ve Detay Bilgileri */}
+                    <div className="pt-2 border-t border-gray-100 grid grid-cols-1 gap-1.5 text-xs text-novis-brown">
+                      {customer.phone && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium text-gray-500">Telefon:</span>
                           <a
                             href={`tel:${customer.phone}`}
-                            className="inline-flex items-center gap-1 text-novis-anthracite font-medium hover:text-novis-bronze transition"
+                            className="text-novis-anthracite font-semibold hover:text-novis-bronze transition"
                           >
                             📞 {customer.phone}
                           </a>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
+                        </div>
+                      )}
 
-                      <td className="p-4 text-gray-600 font-medium whitespace-nowrap">
-                        {customer.budget
-                          ? `${Number(customer.budget).toLocaleString(
-                              "tr-TR",
-                            )} TL`
-                          : "-"}
-                      </td>
+                      {customer.budget && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium text-gray-500">Bütçe:</span>
+                          <span className="text-novis-gold font-bold text-sm">
+                            {Number(customer.budget).toLocaleString("tr-TR")} TL
+                          </span>
+                        </div>
+                      )}
 
-                      <td className="p-4 text-gray-600">
-                        {customer.demand || "-"}
-                      </td>
+                      {customer.demand && (
+                        <div className="flex items-start gap-1.5">
+                          <span className="font-medium text-gray-500 shrink-0">Talep:</span>
+                          <span className="text-novis-anthracite">{customer.demand}</span>
+                        </div>
+                      )}
 
-                      <td className="p-4 text-xs font-medium text-novis-anthracite">
-                        {customer.property_id ? (
+                      {customer.property_id && (
+                        <div className="pt-1">
                           <button
                             type="button"
                             onClick={() => setSelectedPropertyId(customer.property_id)}
-                            className="inline-flex items-center gap-1.5 bg-novis-cream/60 hover:bg-novis-cream text-novis-anthracite hover:text-novis-gold px-2.5 py-1.5 rounded-lg border border-novis-bronze/20 transition group max-w-[220px] text-left cursor-pointer"
-                            title="İlgili İlan Detaylarını Görüntüle"
+                            className="w-full inline-flex items-center gap-1.5 bg-novis-cream/60 hover:bg-novis-cream text-novis-anthracite px-2.5 py-1.5 rounded-lg border border-novis-bronze/20 transition text-left text-xs cursor-pointer"
                           >
                             <span>🏢</span>
-                            <span className="font-semibold underline decoration-dotted group-hover:decoration-solid truncate">
-                              #{customer.property_id} - {customer.property_title || "İlan Başlığı Yok"}
+                            <span className="font-semibold underline truncate">
+                              #{customer.property_id} - {customer.property_title || "İlgili İlan"}
                             </span>
                           </button>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </td>
+                        </div>
+                      )}
 
-                      <td className="p-4">{getStatusBadge(customer.status)}</td>
+                      {customer.notes && (
+                        <div className="bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-[11px] text-gray-600 mt-1">
+                          <span className="font-semibold block mb-0.5">Not:</span>
+                          {customer.notes}
+                        </div>
+                      )}
+                    </div>
 
-                      <td className="p-4 text-gray-600 max-w-xs">
-                        {customer.notes ? (
-                          <span
-                            className="block truncate"
-                            title={customer.notes}
-                          >
-                            {customer.notes}
-                          </span>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
+                    {/* Aksiyon Butonları */}
+                    <div className="pt-2 border-t border-gray-100 grid grid-cols-3 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate("/admin/islem-gecmisi", {
+                            state: { customerId: customer.id },
+                          })
+                        }
+                        className="text-novis-bronze hover:text-novis-brown text-xs font-semibold py-2 px-1 bg-novis-cream rounded-xl transition text-center cursor-pointer"
+                      >
+                        İşlemler
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEdit(customer)}
+                        className="text-blue-600 hover:text-blue-800 text-xs font-semibold py-2 px-1 bg-blue-50 rounded-xl transition text-center cursor-pointer"
+                      >
+                        Düzenle
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(customer.id)}
+                        className="text-red-500 hover:text-red-700 text-xs font-semibold py-2 px-1 bg-red-50 rounded-xl transition text-center cursor-pointer"
+                      >
+                        Sil
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-                      <td className="p-4 text-right whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            navigate("/admin/islem-gecmisi", {
-                              state: { customerId: customer.id },
-                            })
-                          }
-                          className="text-novis-bronze hover:text-novis-brown text-xs font-semibold px-2.5 py-1.5 bg-novis-cream hover:bg-novis-gold/20 rounded-lg transition mr-2"
+              {/* MASAÜSTÜ TABLOSU (md ve üzeri ekranlar) */}
+              <div className="hidden md:block bg-white rounded-2xl border border-novis-bronze/20 shadow-xs overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-novis-cream/40 border-b border-novis-bronze/10 text-xs font-bold text-novis-anthracite uppercase">
+                        <th className="p-4">Ad Soyad</th>
+                        <th className="p-4">Telefon</th>
+                        <th className="p-4">Bütçe</th>
+                        <th className="p-4">Talep</th>
+                        <th className="p-4">İLGİLENDİĞİ İLAN</th>
+                        <th className="p-4">Durum</th>
+                        <th className="p-4">Not</th>
+                        <th className="p-4 text-right">İşlemler</th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="divide-y divide-gray-100 text-sm">
+                      {filteredCustomers.map((customer) => (
+                        <tr
+                          key={customer.id}
+                          className="hover:bg-gray-50 transition"
                         >
-                          İşlem Geçmişi
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEdit(customer)}
-                          className="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition mr-2"
-                        >
-                          Düzenle
-                        </button>
+                          <td className="p-4 font-bold text-novis-anthracite">
+                            <div>{customer.name}</div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(customer.id)}
-                          className="text-red-500 hover:text-red-700 text-xs font-semibold px-2.5 py-1.5 bg-red-50 hover:bg-red-100 rounded-lg transition"
-                        >
-                          Sil
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                            {customer.email && (
+                              <a
+                                href={`mailto:${customer.email}`}
+                                className="text-xs font-normal text-novis-brown hover:underline block mt-0.5"
+                              >
+                                ✉️ {customer.email}
+                              </a>
+                            )}
+                          </td>
+
+                          <td className="p-4 text-gray-600">
+                            {customer.phone ? (
+                              <a
+                                href={`tel:${customer.phone}`}
+                                className="inline-flex items-center gap-1 text-novis-anthracite font-medium hover:text-novis-bronze transition"
+                              >
+                                📞 {customer.phone}
+                              </a>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
+
+                          <td className="p-4 text-gray-600 font-medium whitespace-nowrap">
+                            {customer.budget
+                              ? `${Number(customer.budget).toLocaleString(
+                                  "tr-TR",
+                                )} TL`
+                              : "-"}
+                          </td>
+
+                          <td className="p-4 text-gray-600">
+                            {customer.demand || "-"}
+                          </td>
+
+                          <td className="p-4 text-xs font-medium text-novis-anthracite">
+                            {customer.property_id ? (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedPropertyId(customer.property_id)}
+                                className="inline-flex items-center gap-1.5 bg-novis-cream/60 hover:bg-novis-cream text-novis-anthracite hover:text-novis-gold px-2.5 py-1.5 rounded-lg border border-novis-bronze/20 transition group max-w-[220px] text-left cursor-pointer"
+                                title="İlgili İlan Detaylarını Görüntüle"
+                              >
+                                <span>🏢</span>
+                                <span className="font-semibold underline decoration-dotted group-hover:decoration-solid truncate">
+                                  #{customer.property_id} - {customer.property_title || "İlan Başlığı Yok"}
+                                </span>
+                              </button>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+
+                          <td className="p-4">{getStatusBadge(customer.status)}</td>
+
+                          <td className="p-4 text-gray-600 max-w-xs">
+                            {customer.notes ? (
+                              <span
+                                className="block truncate"
+                                title={customer.notes}
+                              >
+                                {customer.notes}
+                              </span>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
+
+                          <td className="p-4 text-right whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                navigate("/admin/islem-gecmisi", {
+                                  state: { customerId: customer.id },
+                                })
+                              }
+                              className="text-novis-bronze hover:text-novis-brown text-xs font-semibold px-2.5 py-1.5 bg-novis-cream hover:bg-novis-gold/20 rounded-lg transition mr-2 cursor-pointer"
+                            >
+                              İşlem Geçmişi
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(customer)}
+                              className="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition mr-2 cursor-pointer"
+                            >
+                              Düzenle
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(customer.id)}
+                              className="text-red-500 hover:text-red-700 text-xs font-semibold px-2.5 py-1.5 bg-red-50 hover:bg-red-100 rounded-lg transition cursor-pointer"
+                            >
+                              Sil
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
           )}
         </div>
 

@@ -275,7 +275,7 @@ function Properties() {
 
       {/* İlan Sayısı Bilgisi */}
       {!loading && !error && (
-        <div className="mt-6 text-sm font-medium text-novis-brown">
+        <div className="mt-4 sm:mt-6 text-xs sm:text-sm font-medium text-novis-brown">
           Filtrelenen sonuç:{" "}
           <span className="font-bold text-novis-anthracite">
             {filteredProperties.length}
@@ -284,130 +284,225 @@ function Properties() {
         </div>
       )}
 
-      {/* Tablo Alanı */}
+      {/* Tablo ve Liste Alanı */}
       <div className="mt-4">
         {loading ? (
-          <div className="rounded-2xl bg-white p-12 text-center border border-novis-bronze/20 text-novis-brown">
+          <div className="rounded-2xl bg-white p-8 sm:p-12 text-center border border-novis-bronze/20 text-novis-brown text-sm">
             İlanlar yükleniyor...
           </div>
         ) : error ? (
-          <div className="rounded-2xl bg-white p-12 text-center border border-red-200 text-red-600">
+          <div className="rounded-2xl bg-white p-8 sm:p-12 text-center border border-red-200 text-red-600 text-sm">
             <p>{error}</p>
           </div>
         ) : filteredProperties.length === 0 ? (
-          <div className="rounded-2xl bg-white p-12 text-center border border-novis-bronze/20 text-novis-brown">
+          <div className="rounded-2xl bg-white p-8 sm:p-12 text-center border border-novis-bronze/20 text-novis-brown text-sm">
             Kriterlere uygun ilan bulunamadı.
           </div>
         ) : (
-          <div className="rounded-2xl bg-white shadow-sm border border-novis-bronze/20 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-gray-600">
-                <thead className="bg-novis-cream/50 border-b border-gray-200 text-xs uppercase text-novis-brown">
-                  <tr>
-                    <th className="py-4 px-6">Fotoğraf</th>
-                    <th className="py-4 px-6">Başlık</th>
-                    <th className="py-4 px-6">Tür</th>
-                    <th className="py-4 px-6">Kategori</th>
-                    <th className="py-4 px-6">Fiyat</th>
-                    <th className="py-4 px-6">Konum</th>
-                    <th className="py-4 px-6">Durum</th>
-                    <th className="py-4 px-6 text-right">İşlemler</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredProperties.map((property) => (
-                    <tr
-                      key={property.id}
-                      className="hover:bg-gray-50/50 transition"
-                    >
-                      <td className="py-4 px-6">
-                        <div className="h-12 w-16 rounded-lg bg-novis-cream flex items-center justify-center text-lg border border-novis-bronze/20 overflow-hidden shadow-xs">
-                          <img
-                            src={
-                              property.cover_image
-                                ? getFullImageUrl(property.cover_image)
-                                : getPropertyPlaceholder(property.property_type)
-                            }
-                            alt={property.title}
-                            className="w-full h-full object-cover select-none"
-                          />
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 font-medium text-novis-anthracite max-w-xs truncate">
+          <>
+            {/* MOBİL İLAN LİSTESİ (md altı ekranlar) */}
+            <div className="md:hidden space-y-3.5">
+              {filteredProperties.map((property) => (
+                <div
+                  key={property.id}
+                  className="bg-white rounded-2xl border border-novis-bronze/20 p-4 shadow-xs space-y-3"
+                >
+                  <div className="flex gap-3 items-start">
+                    <div className="h-16 w-20 rounded-xl bg-novis-cream shrink-0 border border-novis-bronze/20 overflow-hidden shadow-xs">
+                      <img
+                        src={
+                          property.cover_image
+                            ? getFullImageUrl(property.cover_image)
+                            : getPropertyPlaceholder(property.property_type)
+                        }
+                        alt={property.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-novis-anthracite text-sm line-clamp-2">
                         {property.title}
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="font-medium text-novis-anthracite">
-                          {property.listing_type === "SALE"
-                            ? "Satılık"
-                            : "Kiralık"}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span
-                          className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border ${getPropertyTypeBadgeClass(property.property_type)}`}
-                        >
-                          {property.property_type === "HOUSE" && "Konut"}
-                          {property.property_type === "LAND" && "Arsa"}
-                          {property.property_type === "COMMERCIAL" && "İşyeri"}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 font-semibold text-novis-anthracite">
+                      </h3>
+                      <p className="mt-1 font-bold text-novis-gold text-base">
                         {Number(property.price).toLocaleString("tr-TR")} TL
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="text-novis-anthracite font-medium">
-                          {property.city} / {property.district}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex flex-col gap-1.5 items-start">
-                          <Badge
-                            variant={getPropertyStatusVariant(property.status)}
-                          >
-                            {getPropertyStatusLabel(property.status)}
-                          </Badge>
-                          <select
-                            value={property.status}
-                            onChange={(e) =>
-                              handleStatusDropdownChange(
-                                property,
-                                e.target.value,
-                              )
-                            }
-                            className="text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white text-novis-anthracite focus:outline-none focus:ring-1 focus:ring-novis-bronze"
-                          >
-                            <option value="ACTIVE">Aktif</option>
-                            <option value="INACTIVE">Yayından Kaldır</option>
-                            <option value="SOLD">Satıldı</option>
-                            <option value="RENTED">Kiralandı</option>
-                          </select>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 text-right space-x-2">
-                        <button
-                          onClick={() =>
-                            navigate(`/admin/ilanlar/${property.id}/duzenle`)
-                          }
-                          className="text-novis-anthracite hover:text-black font-medium text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition"
-                        >
-                          Düzenle
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleDelete(property.id, property.title)
-                          }
-                          className="text-red-600 hover:text-red-800 font-medium text-xs bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition"
-                        >
-                          Sil
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </p>
+                      <p className="text-xs text-novis-brown mt-0.5">
+                        📍 {property.city} / {property.district}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Etiketler ve Durum */}
+                  <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-100 text-novis-anthracite">
+                        {property.listing_type === "SALE" ? "Satılık" : "Kiralık"}
+                      </span>
+                      <span
+                        className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border ${getPropertyTypeBadgeClass(property.property_type)}`}
+                      >
+                        {property.property_type === "HOUSE" && "Konut"}
+                        {property.property_type === "LAND" && "Arsa"}
+                        {property.property_type === "COMMERCIAL" && "İşyeri"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <Badge variant={getPropertyStatusVariant(property.status)}>
+                        {getPropertyStatusLabel(property.status)}
+                      </Badge>
+                      <select
+                        value={property.status}
+                        onChange={(e) =>
+                          handleStatusDropdownChange(property, e.target.value)
+                        }
+                        className="text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white text-novis-anthracite focus:outline-none focus:ring-1 focus:ring-novis-bronze"
+                      >
+                        <option value="ACTIVE">Aktif</option>
+                        <option value="INACTIVE">Yayından Kaldır</option>
+                        <option value="SOLD">Satıldı</option>
+                        <option value="RENTED">Kiralandı</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Aksiyon Butonları */}
+                  <div className="pt-2 border-t border-gray-100 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(`/admin/ilanlar/${property.id}/duzenle`)
+                      }
+                      className="w-full text-center text-novis-anthracite font-semibold text-xs bg-gray-100 hover:bg-gray-200 py-2.5 rounded-xl transition cursor-pointer"
+                    >
+                      ✏️ Düzenle
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleDelete(property.id, property.title)
+                      }
+                      className="w-full text-center text-red-600 font-semibold text-xs bg-red-50 hover:bg-red-100 py-2.5 rounded-xl transition cursor-pointer"
+                    >
+                      🗑️ Sil
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+
+            {/* MASAÜSTÜ TABLO (md ve üzeri ekranlar) */}
+            <div className="hidden md:block rounded-2xl bg-white shadow-sm border border-novis-bronze/20 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-gray-600">
+                  <thead className="bg-novis-cream/50 border-b border-gray-200 text-xs uppercase text-novis-brown">
+                    <tr>
+                      <th className="py-4 px-6">Fotoğraf</th>
+                      <th className="py-4 px-6">Başlık</th>
+                      <th className="py-4 px-6">Tür</th>
+                      <th className="py-4 px-6">Kategori</th>
+                      <th className="py-4 px-6">Fiyat</th>
+                      <th className="py-4 px-6">Konum</th>
+                      <th className="py-4 px-6">Durum</th>
+                      <th className="py-4 px-6 text-right">İşlemler</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredProperties.map((property) => (
+                      <tr
+                        key={property.id}
+                        className="hover:bg-gray-50/50 transition"
+                      >
+                        <td className="py-4 px-6">
+                          <div className="h-12 w-16 rounded-lg bg-novis-cream flex items-center justify-center text-lg border border-novis-bronze/20 overflow-hidden shadow-xs">
+                            <img
+                              src={
+                                property.cover_image
+                                  ? getFullImageUrl(property.cover_image)
+                                  : getPropertyPlaceholder(property.property_type)
+                              }
+                              alt={property.title}
+                              className="w-full h-full object-cover select-none"
+                            />
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 font-medium text-novis-anthracite max-w-xs truncate">
+                          {property.title}
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="font-medium text-novis-anthracite">
+                            {property.listing_type === "SALE"
+                              ? "Satılık"
+                              : "Kiralık"}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span
+                            className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border ${getPropertyTypeBadgeClass(property.property_type)}`}
+                          >
+                            {property.property_type === "HOUSE" && "Konut"}
+                            {property.property_type === "LAND" && "Arsa"}
+                            {property.property_type === "COMMERCIAL" && "İşyeri"}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 font-semibold text-novis-anthracite">
+                          {Number(property.price).toLocaleString("tr-TR")} TL
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="text-novis-anthracite font-medium">
+                            {property.city} / {property.district}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex flex-col gap-1.5 items-start">
+                            <Badge
+                              variant={getPropertyStatusVariant(property.status)}
+                            >
+                              {getPropertyStatusLabel(property.status)}
+                            </Badge>
+                            <select
+                              value={property.status}
+                              onChange={(e) =>
+                                handleStatusDropdownChange(
+                                  property,
+                                  e.target.value,
+                                )
+                              }
+                              className="text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white text-novis-anthracite focus:outline-none focus:ring-1 focus:ring-novis-bronze"
+                            >
+                              <option value="ACTIVE">Aktif</option>
+                              <option value="INACTIVE">Yayından Kaldır</option>
+                              <option value="SOLD">Satıldı</option>
+                              <option value="RENTED">Kiralandı</option>
+                            </select>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 text-right space-x-2">
+                          <button
+                            onClick={() =>
+                              navigate(`/admin/ilanlar/${property.id}/duzenle`)
+                            }
+                            className="text-novis-anthracite hover:text-black font-medium text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition cursor-pointer"
+                          >
+                            Düzenle
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleDelete(property.id, property.title)
+                            }
+                            className="text-red-600 hover:text-red-800 font-medium text-xs bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition cursor-pointer"
+                          >
+                            Sil
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         )}
       </div>
 

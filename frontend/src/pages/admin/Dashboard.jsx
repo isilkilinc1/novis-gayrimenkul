@@ -29,10 +29,10 @@ function Dashboard() {
     <Container>
       {/* Üst Başlık */}
       <div>
-        <h1 className="font-display text-4xl font-bold text-novis-anthracite">
+        <h1 className="font-display text-2xl sm:text-4xl font-bold text-novis-anthracite">
           Dashboard
         </h1>
-        <p className="mt-2 text-novis-brown">
+        <p className="mt-1 sm:mt-2 text-xs sm:text-base text-novis-brown">
           NOVIS Gayrimenkul yönetim paneline hoş geldiniz. İşletmenizin genel
           durumunu buradan takip edebilirsiniz.
         </p>
@@ -40,13 +40,13 @@ function Dashboard() {
 
       {/* Hata Durumu */}
       {error && (
-        <div className="mt-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+        <div className="mt-4 sm:mt-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs sm:text-sm">
           {error}
         </div>
       )}
 
       {/* İstatistik Kartları Grid Yapısı (Gerçek Veriler) */}
-      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 sm:mt-10 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         <StatCard
           title="Toplam İlan"
           value={loading ? "..." : (stats?.totalProperties ?? 0)}
@@ -90,12 +90,12 @@ function Dashboard() {
       </div>
 
       {/* Son Talepler / Hızlı Bakış Bölümü */}
-      <div className="mt-12 rounded-2xl bg-white p-6 shadow-sm border border-novis-bronze/20">
-        <h2 className="text-xl font-bold text-novis-anthracite mb-4">
+      <div className="mt-8 sm:mt-12 rounded-2xl bg-white p-5 sm:p-6 shadow-xs border border-novis-bronze/20">
+        <h2 className="text-lg sm:text-xl font-bold text-novis-anthracite mb-2 sm:mb-4">
           Son İletişim Talepleri Özeti
         </h2>
-        <p className="text-sm text-novis-brown">
-          Yeni gelen iletişim taleplerinin detaylı yönetimi için sol menüden{" "}
+        <p className="text-xs sm:text-sm text-novis-brown">
+          Yeni gelen iletişim taleplerinin detaylı yönetimi için menüden{" "}
           <strong className="text-novis-anthracite">İletişim Talepleri</strong>{" "}
           sayfasını ziyaret edebilirsiniz.
         </p>

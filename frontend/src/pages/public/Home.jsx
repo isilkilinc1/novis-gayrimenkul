@@ -41,36 +41,36 @@ function Home() {
         </div>
 
         {/* Üstüne Oturan ve Ortalanmış İçerik */}
-        <Container className="relative z-10 py-20 text-center">
-          <div className="max-w-3xl mx-auto pt-16">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-novis-gold">
+        <Container className="relative z-10 py-12 sm:py-20 text-center">
+          <div className="max-w-3xl mx-auto pt-8 sm:pt-16">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-novis-gold">
               NOVIS GAYRİMENKUL
             </p>
 
-            <p className="mt-3 text-sm font-medium uppercase tracking-widest text-novis-cream/80">
+            <p className="mt-2 sm:mt-3 text-xs sm:text-sm font-medium uppercase tracking-widest text-novis-cream/80">
               Alım • Satım • Kiralama • İnşaat
             </p>
 
-            <h1 className="mt-4 font-display text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
+            <h1 className="mt-3 sm:mt-4 font-display text-3xl sm:text-5xl lg:text-6xl font-bold leading-tight text-white">
               Hayalinizdeki <br />
               yaşam alanını bulun.
             </h1>
 
-            <p className="mt-6 text-lg leading-8 text-gray-200 max-w-2xl mx-auto">
+            <p className="mt-4 sm:mt-6 text-sm sm:text-lg leading-6 sm:leading-8 text-gray-200 max-w-2xl mx-auto">
               Size ve ihtiyaçlarınıza uygun gayrimenkulü güvenilir ve
               profesyonel hizmet anlayışıyla keşfedin.
             </p>
 
             {/* Yönlendiren Butonlar (Ortalanmış) */}
-            <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <Link to="/ilanlar">
-                <Button>İlanları İncele</Button>
+            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 w-full sm:w-auto">
+              <Link to="/ilanlar" className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto justify-center">İlanları İncele</Button>
               </Link>
 
-              <Link to="/iletisim">
+              <Link to="/iletisim" className="w-full sm:w-auto">
                 <Button
                   variant="secondary"
-                  className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+                  className="w-full sm:w-auto justify-center bg-white/10 text-white border-white/30 hover:bg-white/20"
                 >
                   Bize Ulaşın
                 </Button>
@@ -81,14 +81,14 @@ function Home() {
       </section>
 
       {/* --- ÖNE ÇIKAN İLANLAR BÖLÜMÜ --- */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-12 sm:py-20 bg-gray-50">
         <Container>
-          <div className="flex justify-between items-center mb-10">
+          <div className="flex justify-between items-center mb-8 sm:mb-10">
             <div>
-              <h2 className="font-display text-3xl font-bold text-novis-anthracite">
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-novis-anthracite">
                 Öne Çıkan İlanlar
               </h2>
-              <p className="mt-1 text-novis-brown text-sm">
+              <p className="mt-1 text-novis-brown text-xs sm:text-sm">
                 En güncel portföyümüzden seçkin alternatifler.
               </p>
             </div>

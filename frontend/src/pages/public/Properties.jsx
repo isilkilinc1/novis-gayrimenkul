@@ -16,6 +16,7 @@ function Properties() {
 
   // Arama ve Filtre State'leri
   const [search, setSearch] = useState("");
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [filters, setFilters] = useState({
     propertyType: "",
     listingType: "",
@@ -27,6 +28,11 @@ function Properties() {
     city: "",
     district: "",
   });
+
+  // Aktif filtre sayısı (kullanıcıya rozet olarak göstermek için)
+  const activeFiltersCount = Object.entries(filters).filter(
+    ([, val]) => val !== "" && val !== null && val !== undefined && val !== 0,
+  ).length;
 
   // Backend'den filtrelenmiş, aranmış ve sayfalanmış ilanları çeken fonksiyon
   const fetchProperties = useCallback(
@@ -95,6 +101,9 @@ function Properties() {
   const handleFilterSubmit = (e) => {
     e.preventDefault();
     fetchProperties(search, filters, 1);
+    if (window.innerWidth < 1024) {
+      setIsMobileFiltersOpen(false);
+    }
   };
 
   // "Filtreleri Sıfırla" butonuna basıldığında
@@ -116,49 +125,95 @@ function Properties() {
   };
 
   return (
-    <section className="py-20 bg-gray-50 min-h-screen">
+    <section className="py-12 sm:py-20 bg-gray-50 min-h-screen">
       <Container>
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-novis-bronze">
+        <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-novis-bronze">
           NOVIS GAYRİMENKUL
         </p>
 
-        <h1 className="mt-3 font-display text-4xl font-bold text-novis-anthracite">
+        <h1 className="mt-2 sm:mt-3 font-display text-3xl sm:text-4xl font-bold text-novis-anthracite">
           Gayrimenkul İlanları
         </h1>
 
-        <p className="mt-4 text-novis-brown">
+        <p className="mt-2 sm:mt-4 text-sm sm:text-base text-novis-brown">
           Hayalinizdeki gayrimenkulü arayın, kriterlerinize göre filtreleyin.
         </p>
 
         {/* ARAMA ÇUBUĞU ÜST ALANI */}
-        <div className="mt-8">
-          <form onSubmit={handleFilterSubmit} className="flex gap-3">
+        <div className="mt-6 sm:mt-8">
+          <form onSubmit={handleFilterSubmit} className="flex gap-2 sm:gap-3">
             <div className="relative flex-1">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-novis-brown">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 sm:pl-4 text-novis-brown">
                 🔍
               </span>
               <input
                 type="text"
-                placeholder="İlan, konum, başlık veya özellik ara (Örn: Selçuklu, 3+1, arsa)..."
+                placeholder="İlan, konum, başlık veya özellik ara..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-novis-bronze/30 bg-white text-novis-anthracite shadow-sm focus:outline-none focus:border-novis-gold text-sm"
+                className="w-full pl-10 sm:pl-11 pr-3 sm:pr-4 py-3 sm:py-3.5 rounded-2xl border border-novis-bronze/30 bg-white text-novis-anthracite shadow-xs focus:outline-none focus:border-novis-gold text-xs sm:text-sm"
               />
             </div>
-            <Button type="submit" className="px-6 rounded-2xl">
+            <Button type="submit" className="px-4 sm:px-6 rounded-2xl text-xs sm:text-sm shrink-0">
               Ara
             </Button>
           </form>
         </div>
 
+        {/* MOBİL FİLTRE AÇ/KAPAT BUTONU (lg altı ekranlar) */}
+        <div className="mt-3 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setIsMobileFiltersOpen((prev) => !prev)}
+            className="w-full flex items-center justify-between px-4 py-3.5 bg-white rounded-2xl border border-novis-bronze/30 shadow-xs text-novis-anthracite font-medium text-sm hover:border-novis-gold active:bg-gray-50 transition cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">⚙️</span>
+              <span className="font-semibold text-novis-anthracite">Filtrele</span>
+              {activeFiltersCount > 0 && (
+                <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold bg-novis-gold text-white rounded-full">
+                  {activeFiltersCount} Aktif
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs text-novis-brown font-medium">
+              <span>{isMobileFiltersOpen ? "Paneli Kapat" : "Filtreleri Göster"}</span>
+              <span className="text-xs">{isMobileFiltersOpen ? "▲" : "▼"}</span>
+            </div>
+          </button>
+        </div>
+
         {/* Ana Düzen: Sol Taraf Filtre Paneli, Sağ Taraf İlan Listesi */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="mt-6 lg:mt-8 grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
           {/* SOL: FİLTRE PANELİ */}
-          <div className="lg:col-span-1">
-            <div className="bg-white p-6 rounded-2xl border border-novis-bronze/20 shadow-sm sticky top-24">
-              <h2 className="font-display text-lg font-bold text-novis-anthracite mb-4 pb-3 border-b border-gray-100">
-                Filtreler
-              </h2>
+          <div
+            className={`lg:col-span-1 ${
+              isMobileFiltersOpen ? "block" : "hidden lg:block"
+            }`}
+          >
+            <div className="bg-white p-5 sm:p-6 rounded-2xl border border-novis-bronze/20 shadow-sm lg:sticky lg:top-24">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <h2 className="font-display text-lg font-bold text-novis-anthracite">
+                    Filtreler
+                  </h2>
+                  {activeFiltersCount > 0 && (
+                    <span className="text-xs bg-novis-gold/15 text-novis-bronze font-semibold px-2 py-0.5 rounded-full">
+                      {activeFiltersCount} aktif
+                    </span>
+                  )}
+                </div>
+
+                {/* Mobilde sağ üstte Kapat butonu */}
+                <button
+                  type="button"
+                  onClick={() => setIsMobileFiltersOpen(false)}
+                  className="lg:hidden text-xs text-novis-brown hover:text-novis-anthracite font-medium px-2 py-1 rounded-lg hover:bg-gray-100 transition cursor-pointer"
+                >
+                  Kapat ✕
+                </button>
+              </div>
 
               <form onSubmit={handleFilterSubmit} className="space-y-4 text-sm">
                 {/* Gayrimenkul Türü */}
@@ -170,7 +225,7 @@ function Properties() {
                     name="propertyType"
                     value={filters.propertyType}
                     onChange={handleChange}
-                    className="w-full p-2.5 rounded-xl border border-novis-bronze/30 bg-white text-novis-anthracite focus:outline-none focus:border-novis-gold"
+                    className="w-full p-2.5 rounded-xl border border-novis-bronze/30 bg-white text-novis-anthracite focus:outline-none focus:border-novis-gold text-sm"
                   >
                     <option value="">Tüm Türler</option>
                     <option value="HOUSE">Konut</option>
@@ -188,7 +243,7 @@ function Properties() {
                     name="listingType"
                     value={filters.listingType}
                     onChange={handleChange}
-                    className="w-full p-2.5 rounded-xl border border-novis-bronze/30 bg-white text-novis-anthracite focus:outline-none focus:border-novis-gold"
+                    className="w-full p-2.5 rounded-xl border border-novis-bronze/30 bg-white text-novis-anthracite focus:outline-none focus:border-novis-gold text-sm"
                   >
                     <option value="">Tümü</option>
                     <option value="SALE">Satılık</option>
@@ -206,7 +261,7 @@ function Properties() {
                       name="rooms"
                       value={filters.rooms}
                       onChange={handleChange}
-                      className="w-full p-2.5 rounded-xl border border-novis-bronze/30 bg-white text-novis-anthracite focus:outline-none focus:border-novis-gold"
+                      className="w-full p-2.5 rounded-xl border border-novis-bronze/30 bg-white text-novis-anthracite focus:outline-none focus:border-novis-gold text-sm"
                     >
                       <option value="">Tüm Odalar</option>
                       <option value="1+1">1+1</option>
@@ -230,7 +285,7 @@ function Properties() {
                       placeholder="Min"
                       value={filters.minPrice}
                       onChange={handleChange}
-                      className="w-full p-2.5 rounded-xl border border-novis-bronze/30 text-novis-anthracite focus:outline-none focus:border-novis-gold"
+                      className="w-full p-2.5 rounded-xl border border-novis-bronze/30 text-novis-anthracite focus:outline-none focus:border-novis-gold text-sm"
                     />
                     <input
                       type="number"
@@ -238,7 +293,7 @@ function Properties() {
                       placeholder="Max"
                       value={filters.maxPrice}
                       onChange={handleChange}
-                      className="w-full p-2.5 rounded-xl border border-novis-bronze/30 text-novis-anthracite focus:outline-none focus:border-novis-gold"
+                      className="w-full p-2.5 rounded-xl border border-novis-bronze/30 text-novis-anthracite focus:outline-none focus:border-novis-gold text-sm"
                     />
                   </div>
                 </div>
@@ -255,7 +310,7 @@ function Properties() {
                       placeholder="Min m²"
                       value={filters.minSquareMeters}
                       onChange={handleChange}
-                      className="w-full p-2.5 rounded-xl border border-novis-bronze/30 text-novis-anthracite focus:outline-none focus:border-novis-gold"
+                      className="w-full p-2.5 rounded-xl border border-novis-bronze/30 text-novis-anthracite focus:outline-none focus:border-novis-gold text-sm"
                     />
                     <input
                       type="number"
@@ -263,7 +318,7 @@ function Properties() {
                       placeholder="Max m²"
                       value={filters.maxSquareMeters}
                       onChange={handleChange}
-                      className="w-full p-2.5 rounded-xl border border-novis-bronze/30 text-novis-anthracite focus:outline-none focus:border-novis-gold"
+                      className="w-full p-2.5 rounded-xl border border-novis-bronze/30 text-novis-anthracite focus:outline-none focus:border-novis-gold text-sm"
                     />
                   </div>
                 </div>
@@ -279,7 +334,7 @@ function Properties() {
                     placeholder="Örn: Konya"
                     value={filters.city}
                     onChange={handleChange}
-                    className="w-full p-2.5 rounded-xl border border-novis-bronze/30 text-novis-anthracite focus:outline-none focus:border-novis-gold"
+                    className="w-full p-2.5 rounded-xl border border-novis-bronze/30 text-novis-anthracite focus:outline-none focus:border-novis-gold text-sm"
                   />
                 </div>
 
@@ -293,19 +348,19 @@ function Properties() {
                     placeholder="Örn: Selçuklu"
                     value={filters.district}
                     onChange={handleChange}
-                    className="w-full p-2.5 rounded-xl border border-novis-bronze/30 text-novis-anthracite focus:outline-none focus:border-novis-gold"
+                    className="w-full p-2.5 rounded-xl border border-novis-bronze/30 text-novis-anthracite focus:outline-none focus:border-novis-gold text-sm"
                   />
                 </div>
 
                 {/* Butonlar */}
                 <div className="pt-2 flex flex-col gap-2">
-                  <Button type="submit" className="w-full justify-center">
-                    Filtrele
+                  <Button type="submit" className="w-full justify-center py-3 text-sm font-semibold">
+                    Filtreleri Uygula
                   </Button>
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="w-full py-2.5 text-center text-xs text-novis-brown hover:text-novis-anthracite font-medium transition-colors"
+                    className="w-full py-2.5 text-center text-xs text-novis-brown hover:text-novis-anthracite font-medium transition-colors cursor-pointer"
                   >
                     Filtreleri Sıfırla
                   </button>
@@ -360,14 +415,14 @@ function Properties() {
 
                 {/* PAGINATION (SAYFALAMA) BUTONLARI */}
                 {pagination.totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-2 pt-6">
+                  <div className="flex justify-center items-center gap-1.5 sm:gap-2 pt-6 flex-wrap">
                     {/* Önceki Sayfa Butonu */}
                     <button
                       onClick={() =>
                         handlePageChange(Math.max(pagination.page - 1, 1))
                       }
                       disabled={pagination.page === 1}
-                      className="px-4 py-2 rounded-xl border border-novis-bronze/30 text-sm font-medium text-novis-anthracite disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                      className="px-3 sm:px-4 py-2 rounded-xl border border-novis-bronze/30 text-xs sm:text-sm font-medium text-novis-anthracite disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
                     >
                       ‹ Önceki
                     </button>
@@ -382,7 +437,7 @@ function Properties() {
                           <button
                             key={pageNum}
                             onClick={() => handlePageChange(pageNum)}
-                            className={`w-10 h-10 rounded-xl text-sm font-semibold transition-colors ${
+                            className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${
                               isActive
                                 ? "bg-novis-anthracite text-white shadow-sm"
                                 : "border border-novis-bronze/30 text-novis-anthracite hover:bg-gray-100"
@@ -402,7 +457,7 @@ function Properties() {
                         )
                       }
                       disabled={pagination.page === pagination.totalPages}
-                      className="px-4 py-2 rounded-xl border border-novis-bronze/30 text-sm font-medium text-novis-anthracite disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                      className="px-3 sm:px-4 py-2 rounded-xl border border-novis-bronze/30 text-xs sm:text-sm font-medium text-novis-anthracite disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
                     >
                       Sonraki ›
                     </button>

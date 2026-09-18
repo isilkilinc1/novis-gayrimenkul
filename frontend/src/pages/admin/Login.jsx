@@ -7,6 +7,7 @@ import { loginAdmin } from "../../services/authService";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false); // <-- 1. Loading state'ini ekledik
   const navigate = useNavigate();
@@ -71,6 +72,8 @@ function Login() {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            showPassword={showPassword}
+            onTogglePassword={() => setShowPassword((prev) => !prev)}
             required
           />
 

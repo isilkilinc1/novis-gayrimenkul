@@ -27,6 +27,12 @@ select {
   font: inherit;
 }
 
+/* Tarayıcı varsayılan şifre göster butonunu gizle (Edge / IE) */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+}
+
 @media print {
   body { background: #fff; }
   aside, .no-print, button, .fixed { display: none !important; }

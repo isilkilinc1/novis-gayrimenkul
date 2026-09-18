@@ -22,9 +22,12 @@ function AccountSettings() {
   const [currentEmail, setCurrentEmail] = useState(getSavedUserEmail);
 
   const [currentPassword, setCurrentPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
+  const [showNewPasswordConfirm, setShowNewPasswordConfirm] = useState(false);
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -127,6 +130,7 @@ function AccountSettings() {
             <div className="space-y-5">
               <Input
                 label="Mevcut E-posta"
+                name="currentEmail"
                 type="email"
                 value={currentEmail}
                 readOnly
@@ -134,6 +138,7 @@ function AccountSettings() {
 
               <Input
                 label="Yeni E-posta"
+                name="newEmail"
                 type="email"
                 placeholder="Yeni e-posta adresiniz"
                 value={newEmail}
@@ -150,27 +155,36 @@ function AccountSettings() {
             <div className="space-y-5">
               <Input
                 label="Mevcut Şifre"
+                name="currentPassword"
                 type="password"
                 placeholder="Mevcut şifreniz"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
+                showPassword={showCurrentPassword}
+                onTogglePassword={() => setShowCurrentPassword((prev) => !prev)}
                 required
               />
 
               <Input
                 label="Yeni Şifre"
+                name="newPassword"
                 type="password"
                 placeholder="En az 8 karakter"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
+                showPassword={showNewPassword}
+                onTogglePassword={() => setShowNewPassword((prev) => !prev)}
               />
 
               <Input
                 label="Yeni Şifre Tekrar"
+                name="newPasswordConfirm"
                 type="password"
                 placeholder="Yeni şifrenizi tekrar girin"
                 value={newPasswordConfirm}
                 onChange={(e) => setNewPasswordConfirm(e.target.value)}
+                showPassword={showNewPasswordConfirm}
+                onTogglePassword={() => setShowNewPasswordConfirm((prev) => !prev)}
               />
             </div>
           </div>

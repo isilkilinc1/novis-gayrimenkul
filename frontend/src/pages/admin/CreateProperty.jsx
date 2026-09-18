@@ -8,6 +8,7 @@ import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import AdminPropertyMap from "../../components/AdminPropertyMap";
+import { formatPriceInput, parsePriceInput } from "../../utils/formatters";
 
 function CreateProperty() {
   const navigate = useNavigate();
@@ -69,6 +70,13 @@ function CreateProperty() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (name === "price") {
+      setFormData((prev) => ({
+        ...prev,
+        price: formatPriceInput(value),
+      }));
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -238,7 +246,7 @@ function CreateProperty() {
     try {
       const payload = {
         ...formData,
-        price: Number(formData.price),
+        price: parsePriceInput(formData.price),
         square_meters: formData.square_meters
           ? Number(formData.square_meters)
           : null,
@@ -408,8 +416,9 @@ function CreateProperty() {
               <Input
                 label="Fiyat (TL) *"
                 name="price"
-                type="number"
-                placeholder="Örn. 3500000"
+                type="text"
+                inputMode="numeric"
+                placeholder="Örn. 3.500.000"
                 value={formData.price}
                 onChange={handleChange}
                 required

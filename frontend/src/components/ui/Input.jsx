@@ -10,9 +10,11 @@ function Input({
   required = false,
   readOnly = false,
   className = "",
+  inputMode,
   isPassword: explicitIsPassword,
   showPassword: controlledShowPassword,
   onTogglePassword,
+  ...rest
 }) {
   const [internalShowPassword, setInternalShowPassword] = useState(false);
 
@@ -64,6 +66,8 @@ function Input({
           onChange={onChange}
           required={required}
           readOnly={readOnly}
+          inputMode={inputMode}
+          {...rest}
           className={`
             w-full rounded-lg
             border border-novis-bronze/30

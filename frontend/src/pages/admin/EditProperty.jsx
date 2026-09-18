@@ -9,6 +9,7 @@ import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import PropertyImageManager from "../../components/PropertyImageManager";
 import AdminPropertyMap from "../../components/AdminPropertyMap";
+import { formatPriceInput, parsePriceInput } from "../../utils/formatters";
 
 function EditProperty() {
   const { id } = useParams();
@@ -49,7 +50,10 @@ function EditProperty() {
           description: data.description || "",
           listing_type: data.listing_type || "SALE",
           status: data.status || "ACTIVE",
-          price: data.price || "",
+          price:
+            data.price !== undefined && data.price !== null
+              ? formatPriceInput(data.price)
+              : "",
           city: data.city || "",
           district: data.district || "",
           neighborhood: data.neighborhood || "",
@@ -76,6 +80,13 @@ function EditProperty() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (name === "price") {
+      setFormData((prev) => ({
+        ...prev,
+        price: formatPriceInput(value),
+      }));
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -114,7 +125,7 @@ function EditProperty() {
     try {
       const payload = {
         ...formData,
-        price: Number(formData.price),
+        price: parsePriceInput(formData.price),
         square_meters: formData.square_meters
           ? Number(formData.square_meters)
           : null,
@@ -294,8 +305,9 @@ function EditProperty() {
               <Input
                 label="Fiyat (TL) *"
                 name="price"
-                type="number"
-                placeholder="Örn. 3500000"
+                type="text"
+                inputMode="numeric"
+                placeholder="Örn. 3.500.000"
                 value={formData.price}
                 onChange={handleChange}
                 required
